@@ -10,17 +10,17 @@ public class ServiceRequest
 {
     public string ID { get; set; }
     public string SRID { get; set; }
-    //public string SRAuth { get; set; }
-    //public string AuthApprov { get; set; }
-    //public string AuthStatus { get; set; }
-    //public string ProvSite { get; set; }
-    //public string Phone { get; set; }
-    //public string Procedure { get; set; }
-    //public DateTime StartDate { get; set; }
-    //public DateTime EndDate { get; set; }
-    //public int Units { get; set; }
-    //public DateTime SubmissionDate { get; set; }
-    //public DateTime ModifiedDate { get; set; }
+    public string SRAuth { get; set; }
+    public string AuthApprov { get; set; }
+    public string AuthStatus { get; set; }
+    public string ProvSite { get; set; }
+    public string Phone { get; set; }
+    public string Procedure { get; set; }
+    public string StartDate { get; set; }
+    public string EndDate { get; set; }
+    public string Units { get; set; }
+    public string SubmissionDate { get; set; }
+    public string ModifiedDate { get; set; }
 }
 
 namespace HAISelenium
@@ -112,8 +112,8 @@ namespace HAISelenium
             Retry(() => LookupPatient(driver), 3, "Failed to look up patient. Retrying...");
             Retry(() => SelectPatient(driver), 3, "Failed to select patient. Retrying...");
             Retry(() => NavigateTAuthorizationRequests(driver), 3, "Failed to navigate to Authorization Requests. Retrying...");
-            //Retry(() => SelectClaim(driver), 3, "Failed to get Claim. Retrying...");
-            Retry(() => TestRun(driver), 3, "Failed test run");
+            Retry(() => SelectClaim(driver), 3, "Failed to get Claim. Retrying...");
+            //Retry(() => TestRun(driver), 3, "Failed test run");
         }
 
         private static void NavigateToSite(IWebDriver driver, string url)
@@ -285,74 +285,85 @@ namespace HAISelenium
         {
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
 
-            IWebElement claimsGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("servicesGrid")));
+            IWebElement servicesGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("servicesGrid")));
             wait.Until(driver =>
             {
-                var cells = claimsGrid.FindElements(By.CssSelector("tbody td > :first-child"));
+                var cells = servicesGrid.FindElements(By.CssSelector("tbody td > :first-child"));
                 return cells.Count > 0;
             });
 
-            var cells = claimsGrid.FindElements(By.CssSelector("tbody td > :first-child"));
+            var trElements = servicesGrid.FindElements(By.CssSelector("tbody tr:not(:first-child)"));
 
-            List<string> cellTexts = new List<string>();
-
-            foreach (var cell in cells)
+            // Initialize dictionary to store row data
+            List<List<string>> rowData = new List<List<string>>();
+            for (int i = 0; i < trElements.Count; i++)
             {
-                if (cell != null)
+                var tr = trElements[i];
+                List<string> cellTexts = new List<string>();
+                var tdElements = tr.FindElements(By.CssSelector("td:not([style*='display: none'])"));
+                foreach (var td in tdElements)
                 {
-                    var innerText = cell.Text.Trim();
-                    if (!string.IsNullOrEmpty(innerText))
+                    IWebElement firstChild = null;
+                    try
                     {
-                        cellTexts.Add(innerText);
+                        firstChild = td.FindElement(By.CssSelector(":first-child"));
+                    }
+                    catch (NoSuchElementException)
+                    {
+                        continue;
+                    }
+
+                    if (firstChild != null)
+                    {
+                        cellTexts.Add(firstChild.Text.Trim());
                     }
                 }
+                rowData.Add(cellTexts);
             }
-
-            Console.WriteLine("\n");
-            // Print the header texts
-            foreach (var text in cellTexts)
-            {
-                Console.WriteLine(text);
-            }
-            Console.WriteLine("\n");
 
             List<ServiceRequest> serviceRequests = new List<ServiceRequest>();
-            int cellCount = cellTexts.Count;
-            int propertiesCount = 13;
-
-            for (int i = 0; i < cellCount; i += propertiesCount)
+            foreach (var row in rowData)
             {
-                if (i + propertiesCount > cellCount) break; // Ensure we don't go out of bounds
-
                 ServiceRequest serviceRequest = new ServiceRequest
                 {
-                    ID = cellTexts[i],
-                    SRID = cellTexts[i + 1],
-                    //SRAuth = cellTexts[i + 2],
-                    //AuthApprov = cellTexts[i + 3],
-                    //AuthStatus = cellTexts[i + 4],
-                    //ProvSite = cellTexts[i + 5],
-                    //Phone = cellTexts[i + 6],
-                    //Procedure = cellTexts[i + 7],
-                    //StartDate = DateTime.Parse(cellTexts[i + 8]),
-                    //EndDate = DateTime.Parse(cellTexts[i + 9]),
-                    //Units = int.Parse(cellTexts[i + 10]),
-                    //SubmissionDate = DateTime.Parse(cellTexts[i + 11]),
-                    //ModifiedDate = DateTime.Parse(cellTexts[i + 12])
+                    ID = row[1],
+                    SRID = row[2],
+                    SRAuth = row[3],
+                    AuthApprov = row[4],
+                    AuthStatus = row[5],
+                    ProvSite = row[6],
+                    Phone = row[10],
+                    Procedure = row[11],
+                    StartDate = row[12],
+                    EndDate = row[13],
+                    Units = row[14],
+                    SubmissionDate = row[21],
+                    ModifiedDate = row[25]
                 };
 
                 serviceRequests.Add(serviceRequest);
             }
 
-            // Example: Print the results
+            // Example: Print the results in a more readable JSON-like format
             foreach (var request in serviceRequests)
             {
-                Console.WriteLine($"ID: {request.ID}, SRID: {request.SRID}");
+                Console.WriteLine("{");
+                Console.WriteLine($"  \"ID\": \"{request.ID}\",");
+                Console.WriteLine($"  \"SRID\": \"{request.SRID}\",");
+                Console.WriteLine($"  \"SRAuth\": \"{request.SRAuth}\",");
+                Console.WriteLine($"  \"AuthApprov\": \"{request.AuthApprov}\",");
+                Console.WriteLine($"  \"AuthStatus\": \"{request.AuthStatus}\",");
+                Console.WriteLine($"  \"ProvSite\": \"{request.ProvSite}\",");
+                Console.WriteLine($"  \"Phone\": \"{request.Phone}\",");
+                Console.WriteLine($"  \"Procedure\": \"{request.Procedure}\",");
+                Console.WriteLine($"  \"StartDate\": \"{request.StartDate}\",");
+                Console.WriteLine($"  \"EndDate\": \"{request.EndDate}\",");
+                Console.WriteLine($"  \"Units\": \"{request.Units}\",");
+                Console.WriteLine($"  \"SubmissionDate\": \"{request.SubmissionDate}\",");
+                Console.WriteLine($"  \"ModifiedDate\": \"{request.ModifiedDate}\"");
+                Console.WriteLine("}");
+                Console.WriteLine(); // Add an extra line between entries for readability
             }
-
-        //SRAuth: { request.SRAuth}, AuthApprov: { request.AuthApprov}, AuthStatus: { request.AuthStatus}, ProvSite: { request.ProvSite}, Phone: { request.Phone}, Procedure: { request.Procedure}, StartDate: { request.StartDate}, EndDate: { request.EndDate}, Units: { request.Units}, SubmissionDate: { request.SubmissionDate}, ModifiedDate: { request.ModifiedDate}
-
-            // ID, SR ID, SR AUTH, AUTH APPROV, AUTH STATUS, PROV SITE, PHONE, PROCEDURE, START DATE, END DATE, UNITS, SUBMISSION DATE, MODIFIED DATE
         }
 
         //private static GetClaimsHeaders()
