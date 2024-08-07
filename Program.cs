@@ -1,8 +1,6 @@
-﻿using AngleSharp.Io;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
-using System.Text.RegularExpressions;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
 
@@ -113,7 +111,6 @@ namespace HAISelenium
             Retry(() => SelectPatient(driver), 3, "Failed to select patient. Retrying...");
             Retry(() => NavigateTAuthorizationRequests(driver), 3, "Failed to navigate to Authorization Requests. Retrying...");
             Retry(() => SelectClaim(driver), 3, "Failed to get Claim. Retrying...");
-            //Retry(() => TestRun(driver), 3, "Failed test run");
         }
 
         private static void NavigateToSite(IWebDriver driver, string url)
@@ -226,61 +223,6 @@ namespace HAISelenium
             Console.WriteLine("Patient selected successfully.");
         }
 
-        private static void TestRun(IWebDriver driver)
-        {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
-            IWebElement claimsGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("servicesGrid")));
-            wait.Until(driver =>
-            {
-                var cells = claimsGrid.FindElements(By.CssSelector("tbody td > :first-child"));
-                return cells.Count > 0;
-            });
-
-            // Date pattern to search for
-            string month = "5";
-            string year = "2024";
-            // XPath to find elements that contain the partial date
-            string xpath = $"//*[contains(text(), '{month}/') and contains(text(), '/{year}')]";
-
-            try
-            {
-                IReadOnlyCollection<IWebElement> elements = driver.FindElements(By.XPath(xpath));
-
-                IWebElement maxElement = null;
-                int maxDay = -1;
-                Regex dayRegex = new Regex($"{month}/(\\d+)/{year}");
-
-                foreach (var element in elements)
-                {
-                    var match = dayRegex.Match(element.Text);
-                    if (match.Success)
-                    {
-                        int day = int.Parse(match.Groups[1].Value);
-                        if (day > maxDay)
-                        {
-                            maxDay = day;
-                            maxElement = element;
-                        }
-                    }
-                }
-
-                if (maxElement != null)
-                {
-                    Console.WriteLine("Element with the greatest day value: " + maxElement.Text);
-                    maxElement.Click();
-                }
-                else
-                {
-                    Console.WriteLine("No matching elements found with the specified date pattern.");
-                }
-            }
-            catch (NoSuchElementException)
-            {
-                Console.WriteLine("No elements found with the partial date.");
-            }
-        }
-
         private static void SelectClaim(IWebDriver driver)
         {
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
@@ -365,26 +307,6 @@ namespace HAISelenium
                 Console.WriteLine(); // Add an extra line between entries for readability
             }
         }
-
-        //private static GetClaimsHeaders()
-        //{
-        //    //IWebElement headerGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("gview_servicesGrid")));
-        //    //var headers = headerGrid.FindElements(By.CssSelector("thead th"));
-
-        //    //List<string> headerTexts = new List<string>();
-        //    //foreach (var header in headers)
-        //    //{
-        //    //    if (!string.IsNullOrEmpty(header.Text.Trim()))
-        //    //    {
-        //    //        headerTexts.Add(header.Text.Trim());
-        //    //    }
-        //    //}
-        //    //foreach (var text in headerTexts)
-        //    //{
-        //    //    Console.WriteLine(text);
-        //    //}
-
-        //}
 
         private static void Retry(Action action, int retries, string errorMessage)
         {
