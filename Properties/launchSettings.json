@@ -1,0 +1,36 @@
+{
+  "profiles": {
+    "HAI-Selenium": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "USERNAME": "HAI2024",
+        "PASSWORD": "H3alth345#ark2",
+        "CHROME_USER_DATA_DIR": "C:\\Users\\rphum\\AppData\\Local\\Google\\Chrome\\User Data",
+        "CHROME_PROFILE_DIR": "Profile 4",
+        "URL": "https://omd.infomc.biz/iPC",
+        "PATIENT_FIRST_NAME": "Demar",
+        "PATIENT_LAST_NAME": "Sweets",
+        "PATIENT_BIRTH_DAY": "05/02/2004",
+        "MONTH": "05",
+        "PATIENT_GENDER": "Male"
+      }
+    },
+    "SeleniumConsoleApp": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "USERNAME": "HAI2024",
+        "PASSWORD": "H3alth345#ark2",
+        "CHROME_USER_DATA_DIR": "C:\\Users\\rphum\\AppData\\Local\\Google\\Chrome\\User Data",
+        "CHROME_PROFILE_DIR": "Profile 4",
+        "URL": "https://omd.infomc.biz/iPC",
+        "PATIENT_FIRST_NAME": "Demar",
+        "PATIENT_LAST_NAME": "Sweets",
+        "PATIENT_BIRTH_DAY": "05/02/2004",
+        "MONTH": "05",
+        "PATIENT_GENDER": "Male"
+      }
+    }
+  }
+}
