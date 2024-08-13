@@ -1,4 +1,6 @@
-﻿using OpenQA.Selenium;
+﻿using dotenv.net;
+using Newtonsoft.Json;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using WebDriverManager;
@@ -6,19 +8,40 @@ using WebDriverManager.DriverConfigs.Impl;
 
 public class ServiceRequest
 {
-    public string ID { get; set; }
-    public string SRID { get; set; }
-    public string SRAuth { get; set; }
-    public string AuthApprov { get; set; }
-    public string AuthStatus { get; set; }
-    public string ProvSite { get; set; }
-    public string Phone { get; set; }
-    public string Procedure { get; set; }
-    public string StartDate { get; set; }
-    public string EndDate { get; set; }
-    public string Units { get; set; }
-    public string SubmissionDate { get; set; }
-    public string ModifiedDate { get; set; }
+    public required string ID { get; set; }
+    public required string SRID { get; set; }
+    public required string SRAuth { get; set; }
+    public required string AuthApprov { get; set; }
+    public required string AuthStatus { get; set; }
+    public required string ProvSite { get; set; }
+    public required string Phone { get; set; }
+    public required string Procedure { get; set; }
+    public required string StartDate { get; set; }
+    public required string EndDate { get; set; }
+    public required string Units { get; set; }
+    public required string SubmissionDate { get; set; }
+    public required string ModifiedDate { get; set; }
+}
+
+public class ClaimEntry
+{
+    public required string FirstName { get; set; }
+    public required string LastName { get; set; }
+    public required string PolicyNumber { get; set; }
+    public required string DiagnosisCode { get; set; }
+    public required string DateOfBirth { get; set; }
+    public required string ProviderID { get; set; }
+    public required List<Claim> Claims { get; set; }
+}
+
+
+public class Claim
+{
+    public required string ServiceDate { get; set; }
+    public required string Counselor { get; set; }
+    public required string StartTime { get; set; }
+    public required string EndTime { get; set; }
+    public string? Other { get; set; }
 }
 
 namespace HAISelenium
@@ -27,31 +50,64 @@ namespace HAISelenium
     {
         static void Main(string[] args)
         {
-            IWebDriver driver = null;
-
             try
             {
+                DotEnv.Load();
+                // Get the JSON string from the environment variable
+                string claimEntryJson = Environment.GetEnvironmentVariable("CLAIM_ENTRY");
+
+                // Parse the JSON string into a ClaimEntry object
+                ClaimEntry claimEntry = JsonConvert.DeserializeObject<ClaimEntry>(claimEntryJson);
+
                 LogCurrentUserInfo();
 
                 new DriverManager().SetUpDriver(new ChromeConfig());
-                var options = SetupChromeOptions();
 
-                driver = new ChromeDriver(options);
-                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
+                int numberOfThreads = 3; // Adjust this based on your system's capability
+                List<Task> tasks = new List<Task>();
 
-                PerformActions(driver);
+                for (int i = 0; i < numberOfThreads; i++)
+                {
+                    int threadNumber = i;
+                    tasks.Add(Task.Run(() => StartWebDriverThread(threadNumber, claimEntry)));
+                }
+
+                Task.WaitAll(tasks.ToArray());
+                Console.WriteLine("All threads completed.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
+        }
+
+        static void StartWebDriverThread(int threadNumber, ClaimEntry claimEntry)
+        {
+            ChromeDriver driver = null;
+
+            try
+            {
+                Console.WriteLine($"Thread {threadNumber} started.");
+
+                var options = SetupChromeOptions();
+
+                driver = new ChromeDriver(options);
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
+
+                PerformActions(driver, claimEntry);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Thread {threadNumber} - An error occurred: {ex.Message}");
+            }
             finally
             {
-                //driver?.Close();
-                //driver?.Quit();
-                Console.WriteLine("Browser closed.");
+                driver?.Quit();
+                Console.WriteLine($"Thread {threadNumber} finished. Browser closed.");
             }
         }
+
+
 
         private static void LogCurrentUserInfo()
         {
