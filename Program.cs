@@ -1,48 +1,9 @@
-﻿using dotenv.net;
-using Newtonsoft.Json;
+﻿using HAI_Selenium.Actions;
+using HAISelenium.Actions;
+using HAISelenium.InternalClasses;
+using HAISelenium.Utils;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Support.UI;
-using WebDriverManager;
-using WebDriverManager.DriverConfigs.Impl;
-
-public class ServiceRequest
-{
-    public required string ID { get; set; }
-    public required string SRID { get; set; }
-    public required string SRAuth { get; set; }
-    public required string AuthApprov { get; set; }
-    public required string AuthStatus { get; set; }
-    public required string ProvSite { get; set; }
-    public required string Phone { get; set; }
-    public required string Procedure { get; set; }
-    public required string StartDate { get; set; }
-    public required string EndDate { get; set; }
-    public required string Units { get; set; }
-    public required string SubmissionDate { get; set; }
-    public required string ModifiedDate { get; set; }
-}
-
-public class ClaimEntry
-{
-    public required string FirstName { get; set; }
-    public required string LastName { get; set; }
-    public required string PolicyNumber { get; set; }
-    public required string DiagnosisCode { get; set; }
-    public required string DateOfBirth { get; set; }
-    public required string ProviderID { get; set; }
-    public required List<Claim> Claims { get; set; }
-}
-
-
-public class Claim
-{
-    public required string ServiceDate { get; set; }
-    public required string Counselor { get; set; }
-    public required string StartTime { get; set; }
-    public required string EndTime { get; set; }
-    public string? Other { get; set; }
-}
+using System;
 
 namespace HAISelenium
 {
@@ -50,355 +11,120 @@ namespace HAISelenium
     {
         static void Main(string[] args)
         {
-            try
+            int maxRetries = 3;
+            int retryCount = 0;
+
+            while (retryCount < maxRetries)
             {
-                DotEnv.Load();
-                // Get the JSON string from the environment variable
-                string claimEntryJson = Environment.GetEnvironmentVariable("CLAIM_ENTRY");
-
-                // Parse the JSON string into a ClaimEntry object
-                ClaimEntry claimEntry = JsonConvert.DeserializeObject<ClaimEntry>(claimEntryJson);
-
-                LogCurrentUserInfo();
-
-                new DriverManager().SetUpDriver(new ChromeConfig());
-
-                int numberOfThreads = 3; // Adjust this based on your system's capability
-                List<Task> tasks = new List<Task>();
-
-                for (int i = 0; i < numberOfThreads; i++)
-                {
-                    int threadNumber = i;
-                    tasks.Add(Task.Run(() => StartWebDriverThread(threadNumber, claimEntry)));
-                }
-
-                Task.WaitAll(tasks.ToArray());
-                Console.WriteLine("All threads completed.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-
-        static void StartWebDriverThread(int threadNumber, ClaimEntry claimEntry)
-        {
-            ChromeDriver driver = null;
-
-            try
-            {
-                Console.WriteLine($"Thread {threadNumber} started.");
-
-                var options = SetupChromeOptions();
-
-                driver = new ChromeDriver(options);
-                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
-
-                PerformActions(driver, claimEntry);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Thread {threadNumber} - An error occurred: {ex.Message}");
-            }
-            finally
-            {
-                driver?.Quit();
-                Console.WriteLine($"Thread {threadNumber} finished. Browser closed.");
-            }
-        }
-
-
-
-        private static void LogCurrentUserInfo()
-        {
-            string userName = Environment.UserName;
-            string userDomainName = Environment.UserDomainName;
-            Console.WriteLine($"Current User: {userDomainName}\\{userName}");
-        }
-
-        private static string GetEnvironmentVariableOrThrow(string variable)
-        {
-            string? value = Environment.GetEnvironmentVariable(variable);
-            if (string.IsNullOrEmpty(value))
-            {
-                throw new ArgumentException($"{variable} is not set in the environment variables.");
-            }
-            return value;
-        }
-
-        private static void VerifyDirectoryExists(string path)
-        {
-            if (!Directory.Exists(path))
-            {
-                throw new DirectoryNotFoundException($"Directory not found: {path}");
-            }
-        }
-
-        private static ChromeOptions SetupChromeOptions()
-        {
-            string userDataDir = GetEnvironmentVariableOrThrow("CHROME_USER_DATA_DIR");
-            string profileDir = GetEnvironmentVariableOrThrow("CHROME_PROFILE_DIR");
-
-            VerifyDirectoryExists(userDataDir);
-            VerifyDirectoryExists(Path.Combine(userDataDir, profileDir));
-
-            var options = new ChromeOptions();
-            options.AddArgument($"--user-data-dir={userDataDir}");
-            options.AddArgument($"--profile-directory={profileDir}");
-            options.AddArgument("--remote-debugging-port=9222");
-            options.AddArgument("--no-sandbox");
-            options.AddArgument("--disable-extensions");
-            options.AddArgument("--enable-features=NewUsbBackend");
-
-            Console.WriteLine("Chrome options set.");
-            return options;
-        }
-
-        private static void PerformActions(IWebDriver driver)
-        {
-            string url = GetEnvironmentVariableOrThrow("URL");
-            string username = GetEnvironmentVariableOrThrow("USERNAME");
-            string password = GetEnvironmentVariableOrThrow("PASSWORD");
-
-            Retry(() => NavigateToSite(driver, url), 3, "Failed to navigate to site. Retrying...");
-            Retry(() => PerformLogin(driver, username, password), 3, "Login failed. Retrying...");
-            Retry(() => NavigateToMembershipSearch(driver), 3, "Failed to navigate to Membership Search. Retrying...");
-            Retry(() => LookupPatient(driver), 3, "Failed to look up patient. Retrying...");
-            Retry(() => SelectPatient(driver), 3, "Failed to select patient. Retrying...");
-            Retry(() => NavigateTAuthorizationRequests(driver), 3, "Failed to navigate to Authorization Requests. Retrying...");
-            Retry(() => SelectClaim(driver), 3, "Failed to get Claim. Retrying...");
-        }
-
-        private static void NavigateToSite(IWebDriver driver, string url)
-        {
-            driver.Navigate().GoToUrl(url);
-
-            Console.WriteLine($"Navigated to {url}");
-            Console.WriteLine($"Title: {driver.Title}");
-            Console.WriteLine($"URL: {driver.Url}");
-        }
-
-        private static void PerformLogin(IWebDriver driver, string username, string password)
-        {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
-            IWebElement usernameInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("Username")));
-            IWebElement passwordInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("Password")));
-            IWebElement submitButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.Id("SubmitButton")));
-
-            usernameInput.Clear();
-            usernameInput.SendKeys(username);
-
-            passwordInput.Clear();
-            passwordInput.SendKeys(password);
-
-            submitButton.Click();
-
-            Console.WriteLine("Login form submitted.");
-            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector(".fixed-top.header-text")));
-        }
-
-        private static void NavigateToMembershipSearch(IWebDriver driver)
-        {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
-            IWebElement membershipDropdownToggle = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector("a[data-udfname='Membership']")));
-            membershipDropdownToggle.Click();
-            Console.WriteLine("Membership dropdown clicked.");
-
-            IWebElement searchLink = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("a[data-udfname='Search']")));
-            searchLink.Click();
-            Console.WriteLine("Search link clicked.");
-        }
-
-        private static void NavigateTAuthorizationRequests(IWebDriver driver)
-        {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
-            IWebElement membershipDropdownToggle = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector("a[data-udfname='Authorization']")));
-            membershipDropdownToggle.Click();
-            Console.WriteLine("Membership dropdown clicked.");
-
-            IWebElement searchLink = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("a[data-udfname='Requests']")));
-            searchLink.Click();
-            Console.WriteLine("Search link clicked.");
-        }
-
-        private static void LookupPatient(IWebDriver driver)
-        {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
-            string pFirstName = GetEnvironmentVariableOrThrow("PATIENT_FIRST_NAME");
-            string pLastName = GetEnvironmentVariableOrThrow("PATIENT_LAST_NAME");
-            string pBirthday = GetEnvironmentVariableOrThrow("PATIENT_BIRTH_DAY");
-            string pGender = GetEnvironmentVariableOrThrow("PATIENT_GENDER");
-
-            if (!string.IsNullOrEmpty(pFirstName))
-            {
-                IWebElement firstNameInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtFirst")));
-                firstNameInput.SendKeys(pFirstName);
-                Console.WriteLine("First Name added.");
-            }
-
-            if (!string.IsNullOrEmpty(pLastName))
-            {
-                IWebElement lastNameInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtLast")));
-                lastNameInput.SendKeys(pLastName);
-                Console.WriteLine("Last Name added.");
-            }
-
-            if (!string.IsNullOrEmpty(pBirthday))
-            {
-                IWebElement birthDateInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDOB")));
-                birthDateInput.SendKeys(pBirthday);
-
-                IWebElement doneButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button.ui-datepicker-close[data-handler='hide'][data-event='click']")));
-                doneButton.Click();
-                Console.WriteLine("Birthday added.");
-            }
-
-            if (!string.IsNullOrEmpty(pGender))
-            {
-                IWebElement genderDropdown = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("ddGender")));
-                SelectElement selectElement = new SelectElement(genderDropdown);
-                selectElement.SelectByText(pGender);
-                Console.WriteLine("Gender selected.");
-            }
-
-            IWebElement searchButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button#tran1.btn.btn-info.btn-sm.rounded")));
-            searchButton.Click();
-            Console.WriteLine("Search button clicked successfully.");
-        }
-
-        private static void SelectPatient(IWebDriver driver)
-        {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
-            IWebElement patientGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("patientGrid")));
-            patientGrid.Click();
-            Console.WriteLine("Patient selected successfully.");
-        }
-
-        private static void SelectClaim(IWebDriver driver)
-        {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
-            IWebElement servicesGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("servicesGrid")));
-            wait.Until(driver =>
-            {
-                var cells = servicesGrid.FindElements(By.CssSelector("tbody td > :first-child"));
-                return cells.Count > 0;
-            });
-
-            var trElements = servicesGrid.FindElements(By.CssSelector("tbody tr:not(:first-child)"));
-
-            // Initialize dictionary to store row data
-            List<List<string>> rowData = new List<List<string>>();
-            for (int i = 0; i < trElements.Count; i++)
-            {
-                var tr = trElements[i];
-                List<string> cellTexts = new List<string>();
-                var tdElements = tr.FindElements(By.CssSelector("td:not([style*='display: none'])"));
-                foreach (var td in tdElements)
-                {
-                    IWebElement firstChild = null;
-                    try
-                    {
-                        firstChild = td.FindElement(By.CssSelector(":first-child"));
-                    }
-                    catch (NoSuchElementException)
-                    {
-                        continue;
-                    }
-
-                    if (firstChild != null)
-                    {
-                        cellTexts.Add(firstChild.Text.Trim());
-                    }
-                }
-                rowData.Add(cellTexts);
-            }
-
-            List<ServiceRequest> serviceRequests = new List<ServiceRequest>();
-            foreach (var row in rowData)
-            {
-                ServiceRequest serviceRequest = new ServiceRequest
-                {
-                    ID = row[1],
-                    SRID = row[2],
-                    SRAuth = row[3],
-                    AuthApprov = row[4],
-                    AuthStatus = row[5],
-                    ProvSite = row[6],
-                    Phone = row[10],
-                    Procedure = row[11],
-                    StartDate = row[12],
-                    EndDate = row[13],
-                    Units = row[14],
-                    SubmissionDate = row[21],
-                    ModifiedDate = row[25]
-                };
-
-                serviceRequests.Add(serviceRequest);
-            }
-
-            // Example: Print the results in a more readable JSON-like format
-            foreach (var request in serviceRequests)
-            {
-                Console.WriteLine("{");
-                Console.WriteLine($"  \"ID\": \"{request.ID}\",");
-                Console.WriteLine($"  \"SRID\": \"{request.SRID}\",");
-                Console.WriteLine($"  \"SRAuth\": \"{request.SRAuth}\",");
-                Console.WriteLine($"  \"AuthApprov\": \"{request.AuthApprov}\",");
-                Console.WriteLine($"  \"AuthStatus\": \"{request.AuthStatus}\",");
-                Console.WriteLine($"  \"ProvSite\": \"{request.ProvSite}\",");
-                Console.WriteLine($"  \"Phone\": \"{request.Phone}\",");
-                Console.WriteLine($"  \"Procedure\": \"{request.Procedure}\",");
-                Console.WriteLine($"  \"StartDate\": \"{request.StartDate}\",");
-                Console.WriteLine($"  \"EndDate\": \"{request.EndDate}\",");
-                Console.WriteLine($"  \"Units\": \"{request.Units}\",");
-                Console.WriteLine($"  \"SubmissionDate\": \"{request.SubmissionDate}\",");
-                Console.WriteLine($"  \"ModifiedDate\": \"{request.ModifiedDate}\"");
-                Console.WriteLine("}");
-                Console.WriteLine(); // Add an extra line between entries for readability
-            }
-        }
-
-        private static void Retry(Action action, int retries, string errorMessage)
-        {
-            int attempt = 0;
-            while (attempt < retries)
-            {
+                IWebDriver driver = null;
                 try
                 {
-                    action();
-                    return;
-                }
-                catch (NoSuchElementException ex)
-                {
-                    attempt++;
-                    Console.WriteLine($"{errorMessage} Attempt {attempt} of {retries}. Error: Element not found. {ex.Message}");
-                    if (attempt >= retries) throw;
-                }
-                catch (ElementClickInterceptedException ex)
-                {
-                    attempt++;
-                    Console.WriteLine($"{errorMessage} Attempt {attempt} of {retries}. Error: Element click intercepted. {ex.Message}");
-                    if (attempt >= retries) throw;
-                }
-                catch (WebDriverTimeoutException ex)
-                {
-                    attempt++;
-                    Console.WriteLine($"{errorMessage} Attempt {attempt} of {retries}. Error: Timeout. {ex.Message}");
-                    if (attempt >= retries) throw;
+                    // Setup
+                    Utilities.LoadEnvVariables();
+                    Utilities.LogCurrentUserInfo();
+                    driver = Utilities.SetupDriver();
+
+                    // Prepare Data
+                    Invoice invoice = Utilities.LoadJsonFile<Invoice>("Utils/request.json");
+                    string serviceDatesMonth = ValidateServiceDateMonth(invoice);
+                    PatientData patientData = new()
+                    {
+                        firstName = invoice.firstName,
+                        lastName = invoice.lastName,
+                        dob = invoice.dob,
+                        policyNumber = invoice.policyNumber,
+                        diagnosisCode = invoice.diagnosisCode,
+                        providerID = invoice.providerID,
+                        gender = invoice.gender,
+                    };
+
+                    // Prepare Incedo Data
+                    LoginToSite(driver);
+                    FindPatient(driver, patientData);
+                    string srAuth = SelectServiceRequestAuthorizationNumber(driver, patientData, serviceDatesMonth);
+
+                    // Process Claims
+                    List<List<ServiceDateData>> batchedServiceDates = Utilities.BatchServiceDates(invoice.serviceDates, 6);
+                    ProcessServiceDates(driver);
+
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    attempt++;
-                    Console.WriteLine($"{errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
-                    if (attempt >= retries) throw;
+                    retryCount++;
+                    Console.WriteLine($"An error occurred: {ex.Message}. Attempting retry {retryCount} of {maxRetries}...");
+
+                    driver?.Close();
+                    driver?.Quit();
+
+                    if (retryCount >= maxRetries)
+                    {
+                        Console.WriteLine("Max retries reached. Exiting program.");
+                        throw;
+                    }
+                }
+                finally
+                {
+                    driver?.Close();
+                    driver?.Quit();
+                    Console.WriteLine("Browser closed.");
                 }
             }
+        }
+
+        internal static string ValidateServiceDateMonth(Invoice invoice)
+        {
+            string serviceDateMonth = null;
+            foreach (var serviceDateData in invoice.serviceDates)
+            {
+                // Split the ServiceDate string by '/'
+                string[] dateParts = serviceDateData.serviceDate.Split('/'); // dateParts[0] = month, dateParts[1] = day, dateParts[2] = year
+                string currentMonth = dateParts[0];
+
+                if (serviceDateMonth == null)
+                {
+                    serviceDateMonth = currentMonth;
+                }
+                else if (currentMonth != serviceDateMonth)
+                {
+                    throw new InvalidOperationException($"Mismatch found: expected month {serviceDateMonth}, but found {currentMonth}.");
+                }
+            }
+            return serviceDateMonth;
+        }
+
+        internal static void LoginToSite(IWebDriver driver)
+        {
+            Utilities.Retry(() => NavigationActions.NavigateToSite(driver), 3, "Failed to navigate to site. Retrying...");
+            Utilities.Retry(() => LoginActions.PerformLogin(driver), 3, "Login failed. Retrying...");
+        }
+
+        internal static void FindPatient(IWebDriver driver, PatientData patientData)
+        {
+            Utilities.Retry(() => NavigationActions.NavigateToMembershipSearch(driver), 3, "Failed to navigate to Membership Search. Retrying...");
+            Utilities.Retry(() => PatientActions.FindPatient(driver, patientData), 3, "Failed to look up patient. Retrying...");
+            Utilities.Retry(() => PatientActions.SelectPatient(driver), 3, "Failed to select patient. Retrying...");
+
+            string externalID = null;
+            Utilities.Retry(() => externalID = PatientActions.SelectPatientExternalID(driver), 3, "Failed to select patient external ID. Retrying...");
+        }
+
+        internal static string SelectServiceRequestAuthorizationNumber(IWebDriver driver, PatientData patientData, string serviceDatesMonth)
+        {
+            Utilities.Retry(() => NavigationActions.NavigateToAuthorizationRequests(driver), 3, "Failed to navigate to Authorization Requests. Retrying...");
+
+            string srAuth = null;
+            Utilities.Retry(() => srAuth = ServiceRequestActions.FindServiceRequestAuthorizationNumber(driver, serviceDatesMonth), 3, "Failed to get Claim. Retrying...");
+
+            Console.WriteLine($"Found Service Request Authorization Number: {srAuth}");
+
+            return srAuth;
+        }
+
+        internal static void ProcessServiceDates(IWebDriver driver)
+        {
+            Utilities.Retry(() => NavigationActions.NavigateToAddClaims(driver), 3, "Failed to navigate to Add Claims. Retrying...");
+            Utilities.Retry(() => ClaimsActions.AddClaim(driver), 3, "Failed to navigate to Add Claims. Retrying...");
         }
     }
 }
