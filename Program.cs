@@ -1,4 +1,5 @@
-﻿using HAISelenium.InternalActions;
+﻿using HAI_Selenium.InternalClasses;
+using HAISelenium.InternalActions;
 using HAISelenium.InternalClasses;
 using HAISelenium.Utils;
 using OpenQA.Selenium;
@@ -18,54 +19,23 @@ namespace HAISelenium
                 try
                 {
                     // Setup
-                    Console.WriteLine("[ACTION] Loading environment variables...");
                     Utilities.LoadEnvVariables();
-                    Console.WriteLine("[SUCCESS] Environment variables loaded.");
-
-                    Console.WriteLine("[ACTION] Logging current user info...");
                     Utilities.LogCurrentUserInfo();
-                    Console.WriteLine("[SUCCESS] User info logged.");
-
-                    Console.WriteLine("[ACTION] Setting up WebDriver...");
                     driver = Utilities.SetupDriver();
-                    Console.WriteLine("[SUCCESS] WebDriver setup complete.");
+                    Invoice invoice = Utilities.LoadJsonFile<Invoice>("Utils/request.json");
+
+                    // Navigation
+                    LoginToSite(driver);
+                    SelectPatient(driver, invoice);
 
                     // Prepare Data
-                    Console.WriteLine("[ACTION] Loading invoice data...");
-                    Invoice invoice = Utilities.LoadJsonFile<Invoice>("Utils/request.json");
                     string serviceDatesMonth = ValidateServiceDateMonth(invoice);
-                    Console.WriteLine($"[SUCCESS] Invoice data loaded and service month validated: {serviceDatesMonth}.");
+                    ServiceRequest authNumberServiceRequest = GetServiceRequestWithAuthNumber(driver, serviceDatesMonth);
 
-                    PatientData patientData = new()
-                    {
-                        firstName = invoice.firstName,
-                        lastName = invoice.lastName,
-                        dob = invoice.dob,
-                        policyNumber = invoice.policyNumber,
-                        diagnosisCode = invoice.diagnosisCode.Split('.')[0], // Remove the decimal part of the diagnosis code
-                        providerID = invoice.providerID,
-                        gender = invoice.gender,
-                    };
-                    Console.WriteLine("[INFO] Patient data prepared.");
+                    FormDataForProcessing formDataForProcessing = Utilities.CreateFormDataForProcessing(invoice, authNumberServiceRequest);
 
-                    // Prepare Incedo Data
-                    Console.WriteLine("[ACTION] Logging into the site...");
-                    LoginToSite(driver);
-                    Console.WriteLine("[SUCCESS] Logged into the site.");
-
-                    Console.WriteLine("[ACTION] Finding patient...");
-                    string externalID = FindPatient(driver, patientData);
-                    Console.WriteLine($"[SUCCESS] Patient found with External ID: {externalID}.");
-
-                    Console.WriteLine("[ACTION] Selecting Service Request Authorization Number...");
-                    string srAuth = SelectServiceRequestAuthorizationNumber(driver, patientData, serviceDatesMonth);
-                    Console.WriteLine($"[SUCCESS] Service Request Authorization Number selected: {srAuth}.");
-
-                    // Process Claims
-                    Console.WriteLine("[ACTION] Processing service dates...");
-                    List<List<ServiceDateData>> batchedServiceDates = Utilities.BatchServiceDates(invoice.serviceDates, 6);
-                    ProcessServiceDates(driver, patientData, batchedServiceDates, externalID, srAuth);
-                    Console.WriteLine("[SUCCESS] Service dates processed successfully.");
+                    // Process Data
+                    ProcessData(driver, formDataForProcessing);
 
                     break;
                 }
@@ -83,22 +53,29 @@ namespace HAISelenium
                         throw;
                     }
                 }
-                finally
-                {
-                    Console.WriteLine("[INFO] Closing browser...");
-                    driver?.Close();
-                    driver?.Quit();
-                    Console.WriteLine("[INFO] Browser closed.");
-                }
+                //finally
+                //{
+                //    Console.WriteLine("[INFO] Closing browser...");
+                //    driver?.Close();
+                //    driver?.Quit();
+                //    Console.WriteLine("[INFO] Browser closed.");
+                //}
             }
         }
-
         internal static string ValidateServiceDateMonth(Invoice invoice)
         {
-            string serviceDateMonth = null;
-            foreach (var serviceDateData in invoice.serviceDates)
+            Console.WriteLine("[ACTION] Validating service dates month ...");
+
+            if (invoice.ServiceDateRequests == null || invoice.ServiceDateRequests.Count == 0)
             {
-                string[] dateParts = serviceDateData.serviceDate.Split('/');
+                throw new ArgumentNullException("[ERROR] ServiceDateRequests cannot be null or empty.");
+            }
+
+            string serviceDateMonth = null;
+
+            foreach (var ServiceDateRequest in invoice.ServiceDateRequests)
+            {
+                string[] dateParts = ServiceDateRequest.ServiceDate.Split('/');
                 string currentMonth = dateParts[0];
 
                 if (serviceDateMonth == null)
@@ -110,50 +87,56 @@ namespace HAISelenium
                     throw new InvalidOperationException($"[ERROR] Mismatch found: expected month {serviceDateMonth}, but found {currentMonth}.");
                 }
             }
+
+            Console.WriteLine($"[SUCCESS] Invoice data loaded and service month validated: {serviceDateMonth}.");
+
             return serviceDateMonth;
         }
 
+
         internal static void LoginToSite(IWebDriver driver)
         {
+            Console.WriteLine("[ACTION] Logging into the site...");
+
             Utilities.Retry(() => NavigationActions.NavigateToSite(driver), 3, "[WARNING] Failed to navigate to site. Retrying...");
             Utilities.Retry(() => LoginActions.PerformLogin(driver), 3, "[WARNING] Login failed. Retrying...");
+
+            Console.WriteLine("[SUCCESS] Logged into the site.");
         }
 
-        internal static string FindPatient(IWebDriver driver, PatientData patientData)
+        internal static void SelectPatient(IWebDriver driver, Invoice invoice)
         {
+            Console.WriteLine("[ACTION] Finding patient...");
+
             Utilities.Retry(() => NavigationActions.NavigateToMembershipSearch(driver), 3, "[WARNING] Failed to navigate to Membership Search. Retrying...");
-            Utilities.Retry(() => PatientActions.FindPatient(driver, patientData), 3, "[WARNING] Failed to look up patient. Retrying...");
-            Utilities.Retry(() => PatientActions.SelectPatient(driver), 3, "[WARNING] Failed to select patient. Retrying...");
+            Utilities.Retry(() => PatientActions.FindPatient(driver, invoice), 3, "[WARNING] Failed to look up patient. Retrying...");
+            Utilities.Retry(() => PatientActions.ChoosePatient(driver), 3, "[WARNING] Failed to select patient. Retrying...");
 
-            string externalID = null;
-            Utilities.Retry(() => externalID = PatientActions.SelectPatientExternalID(driver), 3, "[WARNING] Failed to select patient external ID. Retrying...");
-            return externalID;
+            Console.WriteLine($"[SUCCESS] Patient selected.");
         }
 
-        internal static string SelectServiceRequestAuthorizationNumber(IWebDriver driver, PatientData patientData, string serviceDatesMonth)
+        internal static ServiceRequest GetServiceRequestWithAuthNumber(IWebDriver driver, string serviceDatesMonth)
         {
+            Console.WriteLine("[ACTION] Selecting Service Request Authorization Number...");
+
             Utilities.Retry(() => NavigationActions.NavigateToAuthorizationRequests(driver), 3, "[WARNING] Failed to navigate to Authorization Requests. Retrying...");
 
-            string srAuth = null;
-            Utilities.Retry(() => srAuth = ServiceRequestActions.FindServiceRequestAuthorizationNumber(driver, serviceDatesMonth), 3, "[WARNING] Failed to get Claim. Retrying...");
+            ServiceRequest serviceRequest = null;
+            Utilities.Retry(() => serviceRequest = ServiceRequestActions.SelectServiceRequestWithAuthNumber(driver, serviceDatesMonth), 3, "[WARNING] Failed to get Claim. Retrying...");
 
-            Console.WriteLine($"[INFO] Found Service Request Authorization Number: {srAuth}");
+            Console.WriteLine($"[INFO] Found Service Request Authorization Number: {serviceRequest?.SRAuth}");
 
-            return srAuth;
+            return serviceRequest;
         }
 
-        internal static void ProcessServiceDates(IWebDriver driver, PatientData patientData, List<List<ServiceDateData>> batchedServiceDates, string externalID, string srAuth)
+        internal static void ProcessData(IWebDriver driver, FormDataForProcessing formDataForProcessing)
         {
+            Console.WriteLine("[ACTION] Processing service dates...");
+
             Utilities.Retry(() => NavigationActions.NavigateToAddClaims(driver), 3, "[WARNING] Failed to navigate to Add Claims. Retrying...");
+            Utilities.Retry(() => ClaimsActions.CreateClaims(driver, formDataForProcessing), 3, "[WARNING] Failed to process claim. Retrying...");
 
-            var indexedBatchedServiceDates = batchedServiceDates.Select((batch, index) => new { batch, index });
-
-            foreach (var item in indexedBatchedServiceDates)
-            {
-                var batchNumber = item.index + 1;
-                var batchCount = item.batch.Count;
-                Utilities.Retry(() => ClaimsActions.ProcessClaim(driver, patientData, item.batch, batchCount, batchNumber, externalID, srAuth), 3, "[WARNING] Failed to process claim. Retrying...");
-            }
+            Console.WriteLine("[SUCCESS] Service dates processed successfully.");
         }
     }
 }

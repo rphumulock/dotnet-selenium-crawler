@@ -1,0 +1,15 @@
+﻿namespace HAISelenium.InternalClasses
+{
+    internal class ServiceDateRequest
+    {
+        public required string ServiceDate { get; set; }
+        public required string Counselor { get; set; }
+        public required string StartTime { get; set; }
+        public required string EndTime { get; set; }
+        public string? Other { get; set; }
+        public override string ToString()
+        {
+            return $"Counselor: {Counselor}, ServiceDate: {ServiceDate}, StartTime: {StartTime}, EndTime: {EndTime}";
+        }
+    }
+}

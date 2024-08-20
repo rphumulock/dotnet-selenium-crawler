@@ -6,6 +6,9 @@ using WebDriverManager;
 using OpenQA.Selenium;
 using HAISelenium.InternalClasses;
 using OpenQA.Selenium.Support.UI;
+using System.Globalization;
+using System;
+using HAI_Selenium.InternalClasses;
 
 namespace HAISelenium.Utils
 {
@@ -13,49 +16,52 @@ namespace HAISelenium.Utils
     {
         internal static IWebDriver SetupDriver()
         {
+            Console.WriteLine("[ACTION] Setting up WebDriver...");
+
             new DriverManager().SetUpDriver(new ChromeConfig());
             var options = SetupChromeOptions();
-
-            ChromeDriver driver = new ChromeDriver(options);
+            var driver = new ChromeDriver(options);
             driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
+
+            Console.WriteLine("[SUCCESS] WebDriver setup complete.");
+
             return driver;
         }
 
         internal static void LoadEnvVariables()
         {
+            Console.WriteLine("[ACTION] Loading environment variables...");
             DotEnv.Load();
-            Console.WriteLine("Environment variables loaded.");
+            Console.WriteLine("[SUCCESS] Environment variables loaded.");
         }
 
         internal static T LoadJsonFile<T>(string filePath)
         {
+            Console.WriteLine("[ACTION] Loading JSON file...");
+
             try
             {
-                // Read JSON from the file
-                string json = File.ReadAllText(filePath);
-
-                // Parse the JSON string into an object of type T
-                T data = JsonConvert.DeserializeObject<T>(json);
-                Console.WriteLine("JSON file loaded and parsed.");
+                var json = File.ReadAllText(filePath);
+                var data = JsonConvert.DeserializeObject<T>(json);
+                Console.WriteLine("[SUCCESS] JSON file loaded and parsed.");
                 return data;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred while loading the JSON file: {ex.Message}");
+                Console.WriteLine($"[ERROR] Failed to load JSON file: {ex.Message}");
                 throw;
             }
         }
 
         internal static ChromeOptions SetupChromeOptions()
         {
-            string userDataDir = GetEnvironmentVariableOrThrow("CHROME_USER_DATA_DIR");
-            string profileDir = GetEnvironmentVariableOrThrow("CHROME_PROFILE_DIR");
+            var userDataDir = GetEnvironmentVariableOrThrow("CHROME_USER_DATA_DIR");
+            var profileDir = GetEnvironmentVariableOrThrow("CHROME_PROFILE_DIR");
 
             VerifyDirectoryExists(userDataDir);
             VerifyDirectoryExists(Path.Combine(userDataDir, profileDir));
 
             var options = new ChromeOptions();
-            options.AddArgument("--allowed-ips=127.0.0.1,192.168.1.100");
             options.AddArgument($"--user-data-dir={userDataDir}");
             options.AddArgument($"--profile-directory={profileDir}");
             options.AddArgument("--remote-debugging-port=9222");
@@ -63,7 +69,7 @@ namespace HAISelenium.Utils
             options.AddArgument("--disable-extensions");
             options.AddArgument("--enable-features=NewUsbBackend");
 
-            Console.WriteLine("Chrome options set.");
+            Console.WriteLine("[INFO] Chrome options configured.");
             return options;
         }
 
@@ -71,25 +77,29 @@ namespace HAISelenium.Utils
         {
             if (!Directory.Exists(path))
             {
-                throw new DirectoryNotFoundException($"Directory not found: {path}");
+                throw new DirectoryNotFoundException($"[ERROR] Directory not found: {path}");
             }
         }
 
         internal static string GetEnvironmentVariableOrThrow(string key)
         {
-            string value = Environment.GetEnvironmentVariable(key);
+            var value = Environment.GetEnvironmentVariable(key);
             if (string.IsNullOrEmpty(value))
             {
-                throw new InvalidOperationException($"Environment variable '{key}' is not set.");
+                throw new InvalidOperationException($"[ERROR] Environment variable '{key}' is not set.");
             }
             return value;
         }
 
         internal static void LogCurrentUserInfo()
         {
-            string userName = GetEnvironmentVariableOrThrow("USERNAME");
-            string userDomainName = Environment.UserDomainName;
-            Console.WriteLine($"Current User: {userDomainName}\\{userName}");
+            Console.WriteLine("[ACTION] Logging current user info...");
+
+            var userName = GetEnvironmentVariableOrThrow("USERNAME");
+            var userDomainName = Environment.UserDomainName;
+            Console.WriteLine($"[INFO] Current User: {userDomainName}\\{userName}");
+
+            Console.WriteLine("[SUCCESS] User info logged.");
         }
 
         internal static void Retry(Action action, int retries, string errorMessage)
@@ -102,44 +112,121 @@ namespace HAISelenium.Utils
                     action();
                     return;
                 }
-                catch (NoSuchElementException ex)
+                catch (WebDriverException ex) when (ex is NoSuchElementException or ElementClickInterceptedException or WebDriverTimeoutException)
                 {
                     attempt++;
-                    Console.WriteLine($"{errorMessage} Attempt {attempt} of {retries}. Error: Element not found. {ex.Message}");
-                    if (attempt >= retries) throw;
-                }
-                catch (ElementClickInterceptedException ex)
-                {
-                    attempt++;
-                    Console.WriteLine($"{errorMessage} Attempt {attempt} of {retries}. Error: Element click intercepted. {ex.Message}");
-                    if (attempt >= retries) throw;
-                }
-                catch (WebDriverTimeoutException ex)
-                {
-                    attempt++;
-                    Console.WriteLine($"{errorMessage} Attempt {attempt} of {retries}. Error: Timeout. {ex.Message}");
+                    Console.WriteLine($"[WARN] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
                     if (attempt >= retries) throw;
                 }
                 catch (Exception ex)
                 {
                     attempt++;
-                    Console.WriteLine($"{errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
+                    Console.WriteLine($"[ERROR] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
                     if (attempt >= retries) throw;
                 }
             }
         }
 
-        internal static List<List<ServiceDateData>> BatchServiceDates(List<ServiceDateData> claims, int batchSize)
+        internal static FormDataForProcessing CreateFormDataForProcessing(Invoice invoice, ServiceRequest authNumberServiceRequest)
         {
-            List<List<ServiceDateData>> batches = new List<List<ServiceDateData>>();
-
-            for (int i = 0; i < claims.Count; i += batchSize)
+            var serviceDateRequests = invoice.ServiceDateRequests;
+            var serviceDateFormDataList = serviceDateRequests.Select(serviceDateRequest => new ServiceDateFormData
             {
-                List<ServiceDateData> batch = claims.GetRange(i, Math.Min(batchSize, claims.Count - i));
-                batches.Add(batch);
+                StartDate = serviceDateRequest.ServiceDate,
+                PlaceOfService = "15",
+                CPT = "H2016",
+                DiagnosisPointer = "A",
+                ChargesDollars = "1.",
+                ChargesCents = "00",
+                Units = "1"
+            }).ToList();
+
+            var latestServiceDate = FindLatestServiceDate(serviceDateRequests);
+            var payDate = CalculatePayDate(authNumberServiceRequest, latestServiceDate);
+
+            serviceDateFormDataList.Add(new ServiceDateFormData
+            {
+                StartDate = payDate,
+                PlaceOfService = "15",
+                CPT = "H2018",
+                DiagnosisPointer = "A",
+                ChargesDollars = serviceDateRequests.Count.ToString() + ".",
+                ChargesCents = "00",
+                Units = "1"
+            });
+
+            var batchedServiceDateFormData = BatchServiceDateFormData(serviceDateFormDataList);
+
+            return new FormDataForProcessing
+            {
+                patientFormData = new PatientFormData
+                {
+                    patientDiagnosisCode = invoice.DiagnosisCode.Split('.')[0],
+                    patientPolicyNumber = invoice.PolicyNumber,
+                    authNumber = authNumberServiceRequest.SRAuth,
+                },
+                serviceDatesFormData = batchedServiceDateFormData
+            };
+        }
+
+        private static List<List<ServiceDateFormData>> BatchServiceDateFormData(List<ServiceDateFormData> serviceDateFormDataList)
+        {
+            const int batchSize = 6;
+            var batchedServiceDateFormData = new List<List<ServiceDateFormData>>();
+
+            for (int i = 0; i < serviceDateFormDataList.Count; i += batchSize)
+            {
+                batchedServiceDateFormData.Add(serviceDateFormDataList.GetRange(i, Math.Min(batchSize, serviceDateFormDataList.Count - i)));
             }
 
-            return batches;
+            return batchedServiceDateFormData;
+        }
+
+        internal static string CalculatePayDate(ServiceRequest authNumberServiceRequest, ServiceDateRequest serviceDateRequest)
+        {
+            Console.WriteLine("[ACTION] Calculating pay date...");
+
+            var authNumberServiceRequestParts = authNumberServiceRequest.StartDate.Split('/');
+            var serviceDateRequestParts = serviceDateRequest.ServiceDate.Split('/');
+
+            if (!int.TryParse(authNumberServiceRequestParts[1], out int authNumberServiceRequestDay) ||
+                !int.TryParse(serviceDateRequestParts[1], out int serviceDateRequestDay))
+            {
+                throw new ArgumentException("Invalid date format in service date or service request start date.");
+            }
+
+            string payDate;
+
+            if (authNumberServiceRequestDay >= serviceDateRequestDay)
+            {
+                payDate = string.Join("/", authNumberServiceRequestParts);
+            }
+            else
+            {
+                string lastDayOfMonth = GetLastDayOfMonth(serviceDateRequestParts[0], serviceDateRequestParts[2]);
+                int payDay = serviceDateRequestParts[1] == lastDayOfMonth ? serviceDateRequestDay : serviceDateRequestDay + 1;
+                payDate = $"{serviceDateRequestParts[0]}/{payDay}/{serviceDateRequestParts[2]}";
+            }
+
+            return payDate;
+        }
+
+        internal static ServiceDateRequest FindLatestServiceDate(List<ServiceDateRequest> serviceDateRequests)
+        {
+            string[] formats = { "MM/dd/yyyy", "M/dd/yyyy", "MM/d/yyyy", "M/d/yyyy" };
+
+            return serviceDateRequests
+                .Select(serviceDateRequest =>
+                {
+                    if (!DateTime.TryParseExact(serviceDateRequest.ServiceDate, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
+                    {
+                        throw new InvalidOperationException($"Invalid date format: {serviceDateRequest.ServiceDate}");
+                    }
+                    return new { serviceDateRequest, parsedDate };
+                })
+                .OrderByDescending(x => x.parsedDate)
+                .First()
+                .serviceDateRequest;
         }
 
         internal static WebDriverWait CreateWebDriverWait(IWebDriver driver, int timeoutSeconds = 20)
@@ -147,5 +234,19 @@ namespace HAISelenium.Utils
             return new WebDriverWait(driver, TimeSpan.FromSeconds(timeoutSeconds));
         }
 
+        public static string GetLastDayOfMonth(string monthString, string yearString)
+        {
+            if (!int.TryParse(monthString, out int month) || month is < 1 or > 12)
+            {
+                throw new ArgumentException("Invalid month format. Please enter a valid month as a number (e.g., '5' or '05').");
+            }
+
+            if (!int.TryParse(yearString, out int year))
+            {
+                throw new ArgumentException("Invalid year format. Please enter a valid year as a number (e.g., '2023').");
+            }
+
+            return DateTime.DaysInMonth(year, month).ToString();
+        }
     }
 }

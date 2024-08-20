@@ -6,15 +6,15 @@ namespace HAISelenium.InternalActions
 {
     internal class PatientActions
     {
-        internal static void FindPatient(IWebDriver driver, PatientData patientData)
+        internal static void FindPatient(IWebDriver driver, Invoice invoice)
         {
-            Console.WriteLine($"[ACTION] Looking up patient {patientData.firstName} {patientData.lastName}...");
+            Console.WriteLine($"[ACTION] Looking up patient {invoice.FirstName} {invoice.LastName}...");
 
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
 
             try
             {
-                string policyNumber = patientData.policyNumber;
+                string policyNumber = invoice.PolicyNumber;
                 if (!string.IsNullOrEmpty(policyNumber))
                 {
                     IWebElement policyNumberInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPolicy")));
@@ -23,35 +23,35 @@ namespace HAISelenium.InternalActions
                 }
                 else
                 {
-                    if (!string.IsNullOrEmpty(patientData.firstName))
+                    if (!string.IsNullOrEmpty(invoice.FirstName))
                     {
                         IWebElement firstNameInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtFirst")));
-                        firstNameInput.SendKeys(patientData.firstName);
+                        firstNameInput.SendKeys(invoice.FirstName);
                         Console.WriteLine("[INFO] First name added.");
                     }
 
-                    if (!string.IsNullOrEmpty(patientData.lastName))
+                    if (!string.IsNullOrEmpty(invoice.LastName))
                     {
                         IWebElement lastNameInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtLast")));
-                        lastNameInput.SendKeys(patientData.lastName);
+                        lastNameInput.SendKeys(invoice.LastName);
                         Console.WriteLine("[INFO] Last name added.");
                     }
 
-                    if (!string.IsNullOrEmpty(patientData.dob))
+                    if (!string.IsNullOrEmpty(invoice.DoB))
                     {
                         IWebElement birthDateInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDOB")));
-                        birthDateInput.SendKeys(patientData.dob);
+                        birthDateInput.SendKeys(invoice.DoB);
 
                         IWebElement doneButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button.ui-datepicker-close[data-handler='hide'][data-event='click']")));
                         doneButton.Click();
                         Console.WriteLine("[INFO] Birthdate added.");
                     }
 
-                    if (!string.IsNullOrEmpty(patientData.gender))
+                    if (!string.IsNullOrEmpty(invoice.Gender))
                     {
                         IWebElement genderDropdown = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("ddGender")));
                         SelectElement selectElement = new SelectElement(genderDropdown);
-                        selectElement.SelectByText(patientData.gender);
+                        selectElement.SelectByText(invoice.Gender);
                         Console.WriteLine("[INFO] Gender selected.");
                     }
                 }
@@ -72,7 +72,7 @@ namespace HAISelenium.InternalActions
             }
         }
 
-        internal static void SelectPatient(IWebDriver driver)
+        internal static void ChoosePatient(IWebDriver driver)
         {
             Console.WriteLine("[ACTION] Selecting patient...");
 
@@ -82,6 +82,7 @@ namespace HAISelenium.InternalActions
             {
                 IWebElement patientGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("patientGrid")));
                 patientGrid.Click();
+
                 Console.WriteLine("[INFO] Patient selected successfully.");
             }
             catch (WebDriverTimeoutException ex)

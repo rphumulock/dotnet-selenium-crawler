@@ -6,7 +6,7 @@ namespace HAISelenium.InternalActions
 {
     class ServiceRequestActions
     {
-        internal static string FindServiceRequestAuthorizationNumber(IWebDriver driver, string serviceMonth)
+        internal static ServiceRequest SelectServiceRequestWithAuthNumber(IWebDriver driver, string serviceMonth)
         {
             Console.WriteLine("[ACTION] Starting lookup for Service Request Authorization number...");
 
@@ -108,7 +108,7 @@ namespace HAISelenium.InternalActions
                 Console.WriteLine($"[WARN] No approved service requests found for month: {serviceMonth}");
             }
 
-            return latestRequest?.SRAuth;
+            return latestRequest;
         }
     }
 }
