@@ -1,11 +1,23 @@
 ﻿using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
-using HAISelenium.InternalClasses;
+using HAI_Selenium.InternalClasses;
+using HAI_Selenium.Utils;
 
-namespace HAISelenium.InternalActions
+namespace HAI_Selenium.InternalActions
 {
     internal class PatientActions
     {
+        internal static void SelectPatient(IWebDriver driver, Invoice invoice)
+        {
+            Console.WriteLine("[ACTION] Finding patient...");
+
+            Utilities.Retry(() => NavigationActions.NavigateToMembershipSearch(driver), 3, "[WARNING] Failed to navigate to Membership Search. Retrying...");
+            Utilities.Retry(() => FindPatient(driver, invoice), 3, "[WARNING] Failed to look up patient. Retrying...");
+            Utilities.Retry(() => ChoosePatient(driver), 3, "[WARNING] Failed to select patient. Retrying...");
+
+            Console.WriteLine($"[SUCCESS] Patient selected.");
+        }
+
         internal static void FindPatient(IWebDriver driver, Invoice invoice)
         {
             Console.WriteLine($"[ACTION] Looking up patient {invoice.FirstName} {invoice.LastName}...");
@@ -37,10 +49,10 @@ namespace HAISelenium.InternalActions
                         Console.WriteLine("[INFO] Last name added.");
                     }
 
-                    if (!string.IsNullOrEmpty(invoice.DoB))
+                    if (!string.IsNullOrEmpty(invoice.DateOfBirth))
                     {
                         IWebElement birthDateInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDOB")));
-                        birthDateInput.SendKeys(invoice.DoB);
+                        birthDateInput.SendKeys(invoice.DateOfBirth);
 
                         IWebElement doneButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button.ui-datepicker-close[data-handler='hide'][data-event='click']")));
                         doneButton.Click();

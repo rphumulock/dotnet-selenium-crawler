@@ -1,11 +1,25 @@
 ﻿using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
-using HAISelenium.InternalClasses;
+using HAI_Selenium.InternalClasses;
+using HAI_Selenium.Utils;
 
-namespace HAISelenium.InternalActions
+namespace HAI_Selenium.InternalActions
 {
     class ServiceRequestActions
     {
+        internal static ServiceRequest GetServiceRequestWithAuthNumber(IWebDriver driver, string serviceDatesMonth)
+        {
+            Console.WriteLine("[ACTION] Selecting Service Request Authorization Number...");
+
+            Utilities.Retry(() => NavigationActions.NavigateToAuthorizationRequests(driver), 3, "[WARNING] Failed to navigate to Authorization Requests. Retrying...");
+
+            ServiceRequest serviceRequest = null;
+            Utilities.Retry(() => serviceRequest = SelectServiceRequestWithAuthNumber(driver, serviceDatesMonth), 3, "[WARNING] Failed to get Claim. Retrying...");
+
+            Console.WriteLine($"[INFO] Found Service Request Authorization Number: {serviceRequest?.SRAuth}");
+
+            return serviceRequest;
+        }
         internal static ServiceRequest SelectServiceRequestWithAuthNumber(IWebDriver driver, string serviceMonth)
         {
             Console.WriteLine("[ACTION] Starting lookup for Service Request Authorization number...");

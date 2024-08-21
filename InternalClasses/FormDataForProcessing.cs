@@ -1,6 +1,4 @@
-﻿using HAISelenium.InternalClasses;
-
-namespace HAI_Selenium.InternalClasses
+﻿namespace HAI_Selenium.InternalClasses
 {
     internal class FormDataForProcessing
     {

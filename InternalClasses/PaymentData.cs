@@ -1,0 +1,33 @@
+﻿namespace HAISelenium.InternalClasses
+{
+    internal class PaymentData
+    {
+        public Dictionary<string, string> Intensive { get; set; }
+        public Dictionary<string, string> General { get; set; }
+        public string GetAmount(string treatmentType, int minVisits)
+        {
+            Dictionary<string, string> selectedTreatmentType;
+
+            switch (treatmentType)
+            {
+                case "Intensive":
+                    selectedTreatmentType = Intensive;
+                    break;
+                case "General":
+                    selectedTreatmentType = General;
+                    break;
+                default:
+                    throw new ArgumentException($"Invalid treatment type: {treatmentType}");
+            }
+
+            if (selectedTreatmentType.TryGetValue(minVisits.ToString(), out var amount))
+            {
+                return amount;
+            }
+            else
+            {
+                throw new KeyNotFoundException($"No amount found for {treatmentType} with {minVisits} visits.");
+            }
+        }
+    }
+}

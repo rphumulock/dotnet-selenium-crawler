@@ -1,4 +1,4 @@
-﻿namespace HAISelenium.InternalClasses
+﻿namespace HAI_Selenium.InternalClasses
 {
     internal class ServiceDateRequest
     {
@@ -6,6 +6,7 @@
         public required string Counselor { get; set; }
         public required string StartTime { get; set; }
         public required string EndTime { get; set; }
+        public required string TreatmentType { get; set; }
         public string? Other { get; set; }
         public override string ToString()
         {

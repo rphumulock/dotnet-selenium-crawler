@@ -364,3 +364,7 @@ FodyWeavers.xsd
 /Properties/launchSettings.json
 /.env
 /Utils/request.json
+/Utils/paymentData.json
+/Utils/ClaimStatusRequest.json
+/Utils/CreateClaimsRequest.json
+/Utils/PaymentBreakdown.json

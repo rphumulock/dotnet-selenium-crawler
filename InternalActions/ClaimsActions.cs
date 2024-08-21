@@ -1,13 +1,21 @@
 ﻿using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
-using HAISelenium.InternalClasses;
-using HAISelenium.Utils;
+using HAI_Selenium.Utils;
 using HAI_Selenium.InternalClasses;
 
-namespace HAISelenium.InternalActions
+namespace HAI_Selenium.InternalActions
 {
     internal class ClaimsActions
     {
+        internal static void ProcessData(IWebDriver driver, FormDataForProcessing formDataForProcessing)
+        {
+            Console.WriteLine("[ACTION] Processing service dates...");
+
+            Utilities.Retry(() => NavigationActions.NavigateToAddClaims(driver), 3, "[WARNING] Failed to navigate to Add Claims. Retrying...");
+            Utilities.Retry(() => CreateClaims(driver, formDataForProcessing), 3, "[WARNING] Failed to process claim. Retrying...");
+
+            Console.WriteLine("[SUCCESS] Service dates processed successfully.");
+        }
         internal static void CreateClaims(IWebDriver driver, FormDataForProcessing formDataForProcessing)
         {
             Console.WriteLine($"[ACTION] Creating Claims...");
@@ -71,13 +79,21 @@ namespace HAISelenium.InternalActions
             wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.TextToBePresentInElementValue(signedDate, DateTime.Now.ToString("MM/dd/yyyy")));
             Console.WriteLine("[INFO] Verified signed date.");
 
-            IWebElement diagnosisCodeInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDiagnosis1")));
-            diagnosisCodeInput.Clear();
-            diagnosisCodeInput.SendKeys(patientFormData.patientDiagnosisCode);
-            Console.WriteLine("[INFO] Entered diagnosis code.");
+            var indexedServiceDateRequests = patientFormData.patientDiagnosisCodes.Select((diagnosisCode, index) => new { diagnosisCode, index });
+            foreach (var indexedItem in indexedServiceDateRequests)
+            {
+                int index = indexedItem.index + 1;
+                IWebElement diagnosisCodeInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDiagnosis" + index)));
+                diagnosisCodeInput.SendKeys(Keys.Control + "a");
+                diagnosisCodeInput.SendKeys(Keys.Delete);
+                diagnosisCodeInput.SendKeys(indexedItem.diagnosisCode);
+            }
+
+            Console.WriteLine("[INFO] Entered diagnosis codes.");
 
             IWebElement authNumberInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPriorAuthNumber")));
-            authNumberInput.Clear();
+            authNumberInput.SendKeys(Keys.Control + "a");
+            authNumberInput.SendKeys(Keys.Delete);
             authNumberInput.SendKeys(patientFormData.authNumber);
             Console.WriteLine("[INFO] Entered authorization number.");
         }
@@ -94,7 +110,8 @@ namespace HAISelenium.InternalActions
                 IWebElement dateInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDateOfServStart" + index)));
                 ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", dateInput);
                 dateInput.Click();
-                dateInput.Clear();
+                dateInput.SendKeys(Keys.Control + "a");
+                dateInput.SendKeys(Keys.Delete);
                 dateInput.SendKeys(indexedItem.serviceDate.StartDate);
                 Console.WriteLine($"[INFO] Entered service date for entry #{index} of batch #{batchNumber}.");
                 IWebElement dateInputDoneButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button.ui-datepicker-close[data-handler='hide'][data-event='click']")));
@@ -103,7 +120,8 @@ namespace HAISelenium.InternalActions
 
                 IWebElement placeOfServiceInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPlaceOfService" + index)));
                 placeOfServiceInput.Click();
-                placeOfServiceInput.Clear();
+                placeOfServiceInput.SendKeys(Keys.Control + "a");
+                placeOfServiceInput.SendKeys(Keys.Delete);
                 placeOfServiceInput.SendKeys(indexedItem.serviceDate.PlaceOfService);
                 Console.WriteLine($"[INFO] Entered place of service for entry #{index} of batch #{batchNumber}.");
 
@@ -111,30 +129,36 @@ namespace HAISelenium.InternalActions
                 cptInput.Click();
                 WaitForModalToOpen(driver, 20);
                 WaitForModalToClose(driver, 20);
-                cptInput.Clear();
+                cptInput.SendKeys(Keys.Control + "a");
+                cptInput.SendKeys(Keys.Delete);
                 cptInput.SendKeys(indexedItem.serviceDate.CPT);
                 Console.WriteLine($"[INFO] Entered CPT code for entry #{index} of batch #{batchNumber}.");
 
                 IWebElement diagnosisInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDiagnosisPointer" + index)));
                 diagnosisInput.Click();
-                diagnosisInput.Clear();
+                diagnosisInput.SendKeys(Keys.Control + "a");
+                diagnosisInput.SendKeys(Keys.Delete);
                 diagnosisInput.SendKeys(indexedItem.serviceDate.DiagnosisPointer);
                 Console.WriteLine($"[INFO] Entered diagnosis pointer for entry #{index} of batch #{batchNumber}.");
 
+
                 IWebElement chargesInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtCharges" + index)));
                 chargesInput.Click();
-                chargesInput.Clear();
+                chargesInput.SendKeys(Keys.Control + "a");
+                chargesInput.SendKeys(Keys.Delete);
                 chargesInput.SendKeys(indexedItem.serviceDate.ChargesDollars);
                 Console.WriteLine($"[INFO] Entered charges for entry #{index} of batch #{batchNumber}.");
 
                 IWebElement chargesCentsInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtChargescents" + index)));
                 chargesCentsInput.Click();
-                chargesCentsInput.Clear();
+                chargesCentsInput.SendKeys(Keys.Control + "a");
+                chargesCentsInput.SendKeys(Keys.Delete);
                 chargesCentsInput.SendKeys(indexedItem.serviceDate.ChargesCents);
 
                 IWebElement daysUnitsInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDaysUnits" + index)));
                 daysUnitsInput.Click();
-                daysUnitsInput.Clear();
+                daysUnitsInput.SendKeys(Keys.Control + "a");
+                daysUnitsInput.SendKeys(Keys.Delete);
                 daysUnitsInput.SendKeys(indexedItem.serviceDate.Units);
                 Console.WriteLine($"[INFO] Entered days/units for entry #{index} of batch #{batchNumber}.");
             }
@@ -168,7 +192,8 @@ namespace HAISelenium.InternalActions
         private static void EnterText(IWebDriver driver, WebDriverWait wait, By by, string text)
         {
             IWebElement element = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(by));
-            element.Clear();
+            element.SendKeys(Keys.Control + "a");
+            element.SendKeys(Keys.Delete);
             element.SendKeys(text);
             Console.WriteLine($"[INFO] Entered text '{text}' into element located by {by}.");
         }

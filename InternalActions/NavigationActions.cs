@@ -1,8 +1,8 @@
 ﻿using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
-using HAISelenium.Utils;
+using HAI_Selenium.Utils;
 
-namespace HAISelenium.InternalActions
+namespace HAI_Selenium.InternalActions
 {
     internal class NavigationActions
     {
@@ -44,8 +44,6 @@ namespace HAISelenium.InternalActions
                 driver.Navigate().GoToUrl(url);
 
                 Console.WriteLine($"[SUCCESS] Navigated to {url}");
-                Console.WriteLine($"[INFO] Title: {driver.Title}");
-                Console.WriteLine($"[INFO] URL: {driver.Url}");
             }
             catch (Exception ex)
             {
@@ -67,6 +65,11 @@ namespace HAISelenium.InternalActions
         internal static void NavigateToAddClaims(IWebDriver driver)
         {
             NavigateTo(driver, "a[data-udfname='Claims']", "a[data-udfname='Add Claim']", "Claims", "Add Claim");
+        }
+
+        internal static void NavigateToClaimsStatus(IWebDriver driver)
+        {
+            NavigateTo(driver, "a[data-udfname='Claims']", "a[data-udfname='Claim Status']", "Claims", "Claim Status");
         }
     }
 }

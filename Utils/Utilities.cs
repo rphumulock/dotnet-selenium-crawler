@@ -4,13 +4,12 @@ using OpenQA.Selenium.Chrome;
 using WebDriverManager.DriverConfigs.Impl;
 using WebDriverManager;
 using OpenQA.Selenium;
-using HAISelenium.InternalClasses;
 using OpenQA.Selenium.Support.UI;
 using System.Globalization;
-using System;
 using HAI_Selenium.InternalClasses;
+using HAISelenium.InternalClasses;
 
-namespace HAISelenium.Utils
+namespace HAI_Selenium.Utils
 {
     internal static class Utilities
     {
@@ -127,7 +126,7 @@ namespace HAISelenium.Utils
             }
         }
 
-        internal static FormDataForProcessing CreateFormDataForProcessing(Invoice invoice, ServiceRequest authNumberServiceRequest)
+        internal static FormDataForProcessing CreateFormDataForProcessing(Invoice invoice, PaymentData paymentData, ServiceRequest authNumberServiceRequest)
         {
             var serviceDateRequests = invoice.ServiceDateRequests;
             var serviceDateFormDataList = serviceDateRequests.Select(serviceDateRequest => new ServiceDateFormData
@@ -135,7 +134,7 @@ namespace HAISelenium.Utils
                 StartDate = serviceDateRequest.ServiceDate,
                 PlaceOfService = "15",
                 CPT = "H2016",
-                DiagnosisPointer = "A",
+                DiagnosisPointer = GetDiagnosisPointer(invoice.DiagnosisCodes.Count()),
                 ChargesDollars = "1.",
                 ChargesCents = "00",
                 Units = "1"
@@ -143,15 +142,17 @@ namespace HAISelenium.Utils
 
             var latestServiceDate = FindLatestServiceDate(serviceDateRequests);
             var payDate = CalculatePayDate(authNumberServiceRequest, latestServiceDate);
-
+            var payment = paymentData.GetAmount(serviceDateRequests[0].TreatmentType, serviceDateFormDataList.Count);
+            var paymentDollars = payment.Split('.')[0] + ".";
+            var paymentCents = payment.Split('.')[1];
             serviceDateFormDataList.Add(new ServiceDateFormData
             {
                 StartDate = payDate,
                 PlaceOfService = "15",
                 CPT = "H2018",
-                DiagnosisPointer = "A",
-                ChargesDollars = serviceDateRequests.Count.ToString() + ".",
-                ChargesCents = "00",
+                DiagnosisPointer = GetDiagnosisPointer(invoice.DiagnosisCodes.Count()),
+                ChargesDollars = paymentDollars,
+                ChargesCents = paymentCents,
                 Units = "1"
             });
 
@@ -161,12 +162,17 @@ namespace HAISelenium.Utils
             {
                 patientFormData = new PatientFormData
                 {
-                    patientDiagnosisCode = invoice.DiagnosisCode.Split('.')[0],
+                    patientDiagnosisCodes = invoice.DiagnosisCodes.Select(code => code.Replace(".", "")).ToList(),
                     patientPolicyNumber = invoice.PolicyNumber,
                     authNumber = authNumberServiceRequest.SRAuth,
                 },
                 serviceDatesFormData = batchedServiceDateFormData
             };
+        }
+
+        private static string GetDiagnosisPointer(int diagnosisCodeCount)
+        {
+            return new string(Enumerable.Range('A', diagnosisCodeCount).Select(x => (char)x).ToArray());
         }
 
         private static List<List<ServiceDateFormData>> BatchServiceDateFormData(List<ServiceDateFormData> serviceDateFormDataList)
@@ -209,6 +215,36 @@ namespace HAISelenium.Utils
             }
 
             return payDate;
+        }
+        internal static string ValidateServiceDateMonth(Invoice invoice)
+        {
+            Console.WriteLine("[ACTION] Validating service dates month ...");
+
+            if (invoice.ServiceDateRequests == null || invoice.ServiceDateRequests.Count == 0)
+            {
+                throw new ArgumentNullException("[ERROR] ServiceDateRequests cannot be null or empty.");
+            }
+
+            string serviceDateMonth = null;
+
+            foreach (var ServiceDateRequest in invoice.ServiceDateRequests)
+            {
+                string[] dateParts = ServiceDateRequest.ServiceDate.Split('/');
+                string currentMonth = dateParts[0];
+
+                if (serviceDateMonth == null)
+                {
+                    serviceDateMonth = currentMonth;
+                }
+                else if (currentMonth != serviceDateMonth)
+                {
+                    throw new InvalidOperationException($"[ERROR] Mismatch found: expected month {serviceDateMonth}, but found {currentMonth}.");
+                }
+            }
+
+            Console.WriteLine($"[SUCCESS] Invoice data loaded and service month validated: {serviceDateMonth}.");
+
+            return serviceDateMonth;
         }
 
         internal static ServiceDateRequest FindLatestServiceDate(List<ServiceDateRequest> serviceDateRequests)

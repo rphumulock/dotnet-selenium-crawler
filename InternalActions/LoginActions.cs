@@ -1,11 +1,22 @@
 ﻿using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
-using HAISelenium.Utils;
+using HAI_Selenium.Utils;
 
-namespace HAISelenium.InternalActions
+namespace HAI_Selenium.InternalActions
 {
     internal class LoginActions
     {
+
+        internal static void LoginToSite(IWebDriver driver)
+        {
+            Console.WriteLine("[ACTION] Logging into the site...");
+
+            Utilities.Retry(() => NavigationActions.NavigateToSite(driver), 3, "[WARNING] Failed to navigate to site. Retrying...");
+            Utilities.Retry(() => PerformLogin(driver), 3, "[WARNING] Login failed. Retrying...");
+
+            Console.WriteLine("[SUCCESS] Logged into the site.");
+        }
+
         internal static void PerformLogin(IWebDriver driver)
         {
             Console.WriteLine("[ACTION] Performing login...");
@@ -23,11 +34,14 @@ namespace HAISelenium.InternalActions
                 IWebElement submitButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.Id("SubmitButton")));
                 Console.WriteLine("[INFO] Login form elements located.");
 
-                usernameInput.Clear();
+
+                usernameInput.SendKeys(Keys.Control + "a");
+                usernameInput.SendKeys(Keys.Delete);
                 usernameInput.SendKeys(username);
                 Console.WriteLine("[INFO] Entered username.");
 
-                passwordInput.Clear();
+                passwordInput.SendKeys(Keys.Control + "a");
+                passwordInput.SendKeys(Keys.Delete);
                 passwordInput.SendKeys(password);
                 Console.WriteLine("[INFO] Entered password.");
 
