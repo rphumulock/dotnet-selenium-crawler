@@ -14,13 +14,30 @@ namespace HAI_Selenium.InternalActions
             Utilities.Retry(() => NavigationActions.NavigateToClaimsStatus(driver), 3, "[WARNING] Failed to navigate to Claims Status page. Retrying...");
 
             var claimsList = invoice.Claims.Select((claim, index) => new { claim, index }).ToList();
+            List<ClaimDetails> allClaimsDetails = new List<ClaimDetails>();
+
             foreach (var indexItem in claimsList)
             {
                 Console.WriteLine($"[ACTION] Processing claim for batch #{indexItem.claim.ClaimID}...");
-                Utilities.Retry(() => FindClaim(driver, indexItem.claim), 3, "[WARNING] Failed to find claim #{indexItem.claim.ClaimID}. Retrying...");
-                Utilities.Retry(() => ProcessClaimStatus(driver, indexItem.claim), 3, "[WARNING] Failed to process status for claim #{indexItem.claim.ClaimID}. Retrying...");
+                Utilities.Retry(() => FindClaim(driver, indexItem.claim), 3, $"[WARNING] Failed to find claim #{indexItem.claim.ClaimID}. Retrying...");
+
+                ClaimDetails claimDetails = Utilities.Retry(() => ProcessClaimStatus(driver, indexItem.claim), 3, $"[WARNING] Failed to process status for claim #{indexItem.claim.ClaimID}. Retrying...");
+
+                allClaimsDetails.Add(claimDetails);
+
+                //Console.WriteLine($"[INFO] Processed claim #{indexItem.claim.ClaimID}. Claim Details: {claimDetails}");
             }
+
             Console.WriteLine("[SUCCESS] All claims processed successfully.");
+
+            // Loop through and print each ClaimDetails object
+            Console.WriteLine("[INFO] Printing all claim details...");
+            foreach (var claimDetails in allClaimsDetails)
+            {
+                Console.WriteLine("---------------------\n");
+                Console.WriteLine(claimDetails.ToString());
+                Console.WriteLine("---------------------\n");
+            }
         }
 
         internal static void FindClaim(IWebDriver driver, Claim claim)
@@ -41,7 +58,7 @@ namespace HAI_Selenium.InternalActions
             Console.WriteLine("[INFO] Search initiated for claim.");
         }
 
-        internal static void ProcessClaimStatus(IWebDriver driver, Claim claim)
+        internal static ClaimDetails ProcessClaimStatus(IWebDriver driver, Claim claim)
         {
             Console.WriteLine($"[ACTION] Processing status for claim #{claim.ClaimID}...");
 
@@ -49,15 +66,14 @@ namespace HAI_Selenium.InternalActions
             List<ClaimLineItem> claimLineItems = ProcessClaimLineItems(driver);
             ClaimDetails claimDetails = new ClaimDetails(claimData, claimLineItems);
 
-            // Output the combined details
-            Console.WriteLine($"[INFO] Claim details: {claimDetails}");
+            return claimDetails;
         }
 
         internal static ClaimData ProcessClaimHeader(IWebDriver driver)
         {
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
 
-            IWebElement claimsGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("claimsGrid")));
+            IWebElement claimsGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("claimsGrids")));
             wait.Until(driver =>
             {
                 var cells = claimsGrid.FindElements(By.CssSelector("tbody td > :first-child"));

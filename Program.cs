@@ -41,13 +41,13 @@ namespace HAI_Selenium
                         throw;
                     }
                 }
-                //finally
-                //{
-                //    Console.WriteLine("[INFO] Closing browser...");
-                //    driver?.Close();
-                //    driver?.Quit();
-                //    Console.WriteLine("[INFO] Browser closed.");
-                //}
+                finally
+                {
+                    Console.WriteLine("[INFO] Closing browser...");
+                    //driver?.Close();
+                    //driver?.Quit();
+                    Console.WriteLine("[INFO] Browser closed.");
+                }
             }
         }
 

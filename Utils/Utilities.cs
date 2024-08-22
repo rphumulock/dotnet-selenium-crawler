@@ -108,8 +108,8 @@ namespace HAI_Selenium.Utils
             {
                 try
                 {
-                    action();
-                    return;
+                    action(); // Execute the action
+                    return; // Exit if successful
                 }
                 catch (WebDriverException ex) when (ex is NoSuchElementException or ElementClickInterceptedException or WebDriverTimeoutException)
                 {
@@ -124,6 +124,31 @@ namespace HAI_Selenium.Utils
                     if (attempt >= retries) throw;
                 }
             }
+        }
+
+        internal static T Retry<T>(Func<T> action, int retries, string errorMessage)
+        {
+            int attempt = 0;
+            while (attempt < retries)
+            {
+                try
+                {
+                    return action(); // Attempt the action and return the result
+                }
+                catch (WebDriverException ex) when (ex is NoSuchElementException or ElementClickInterceptedException or WebDriverTimeoutException)
+                {
+                    attempt++;
+                    Console.WriteLine($"[WARN] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
+                    if (attempt >= retries) throw;
+                }
+                catch (Exception ex)
+                {
+                    attempt++;
+                    Console.WriteLine($"[ERROR] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
+                    if (attempt >= retries) throw;
+                }
+            }
+            return default; // Return the default value of T if all attempts fail
         }
 
         internal static FormDataForProcessing CreateFormDataForProcessing(Invoice invoice, PaymentData paymentData, ServiceRequest authNumberServiceRequest)

@@ -13,8 +13,7 @@ namespace HAI_Selenium.InternalActions
 
             Utilities.Retry(() => NavigationActions.NavigateToAuthorizationRequests(driver), 3, "[WARNING] Failed to navigate to Authorization Requests. Retrying...");
 
-            ServiceRequest serviceRequest = null;
-            Utilities.Retry(() => serviceRequest = SelectServiceRequestWithAuthNumber(driver, serviceDatesMonth), 3, "[WARNING] Failed to get Claim. Retrying...");
+            ServiceRequest serviceRequest = Utilities.Retry(() => SelectServiceRequestWithAuthNumber(driver, serviceDatesMonth), 3, "[WARNING] Failed to get Claim. Retrying...");
 
             Console.WriteLine($"[INFO] Found Service Request Authorization Number: {serviceRequest?.SRAuth}");
 
