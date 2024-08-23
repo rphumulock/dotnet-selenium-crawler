@@ -1,4 +1,4 @@
-﻿using HAI_Selenium.InternalClasses;
+﻿using HAI_Selenium.InternalClasses.Status;
 
 internal class ClaimDetails
 {

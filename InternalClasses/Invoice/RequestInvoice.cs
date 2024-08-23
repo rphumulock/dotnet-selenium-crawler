@@ -1,6 +1,8 @@
-﻿namespace HAI_Selenium.InternalClasses
+﻿using HAI_Selenium.InternalClasses.Request;
+
+namespace HAI_Selenium.InternalClasses.Invoice
 {
-    internal class Invoice
+    internal class RequestInvoice
     {
         public required string FirstName { get; set; }
         public required string LastName { get; set; }

@@ -6,8 +6,8 @@ using WebDriverManager;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System.Globalization;
-using HAI_Selenium.InternalClasses;
-using HAISelenium.InternalClasses;
+using HAI_Selenium.InternalClasses.Invoice;
+using HAI_Selenium.InternalClasses.Request;
 
 namespace HAI_Selenium.Utils
 {
@@ -101,57 +101,57 @@ namespace HAI_Selenium.Utils
             Console.WriteLine("[SUCCESS] User info logged.");
         }
 
-        internal static void Retry(Action action, int retries, string errorMessage)
-        {
-            int attempt = 0;
-            while (attempt < retries)
-            {
-                try
-                {
-                    action(); // Execute the action
-                    return; // Exit if successful
-                }
-                catch (WebDriverException ex) when (ex is NoSuchElementException or ElementClickInterceptedException or WebDriverTimeoutException)
-                {
-                    attempt++;
-                    Console.WriteLine($"[WARN] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
-                    if (attempt >= retries) throw;
-                }
-                catch (Exception ex)
-                {
-                    attempt++;
-                    Console.WriteLine($"[ERROR] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
-                    if (attempt >= retries) throw;
-                }
-            }
-        }
+        //internal static void Retry(Action action, int retries, string errorMessage)
+        //{
+        //    int attempt = 0;
+        //    while (attempt < retries)
+        //    {
+        //        try
+        //        {
+        //            action(); // Execute the action
+        //            return; // Exit if successful
+        //        }
+        //        catch (WebDriverException ex) when (ex is NoSuchElementException or ElementClickInterceptedException or WebDriverTimeoutException)
+        //        {
+        //            attempt++;
+        //            Console.WriteLine($"[WARN] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
+        //            if (attempt >= retries) throw;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            attempt++;
+        //            Console.WriteLine($"[ERROR] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
+        //            if (attempt >= retries) throw;
+        //        }
+        //    }
+        //}
 
-        internal static T Retry<T>(Func<T> action, int retries, string errorMessage)
-        {
-            int attempt = 0;
-            while (attempt < retries)
-            {
-                try
-                {
-                    return action(); // Attempt the action and return the result
-                }
-                catch (WebDriverException ex) when (ex is NoSuchElementException or ElementClickInterceptedException or WebDriverTimeoutException)
-                {
-                    attempt++;
-                    Console.WriteLine($"[WARN] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
-                    if (attempt >= retries) throw;
-                }
-                catch (Exception ex)
-                {
-                    attempt++;
-                    Console.WriteLine($"[ERROR] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
-                    if (attempt >= retries) throw;
-                }
-            }
-            return default; // Return the default value of T if all attempts fail
-        }
+        //internal static T Retry<T>(Func<T> action, int retries, string errorMessage)
+        //{
+        //    int attempt = 0;
+        //    while (attempt < retries)
+        //    {
+        //        try
+        //        {
+        //            return action(); // Attempt the action and return the result
+        //        }
+        //        catch (WebDriverException ex) when (ex is NoSuchElementException or ElementClickInterceptedException or WebDriverTimeoutException)
+        //        {
+        //            attempt++;
+        //            Console.WriteLine($"[WARN] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
+        //            if (attempt >= retries) throw;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            attempt++;
+        //            Console.WriteLine($"[ERROR] {errorMessage} Attempt {attempt} of {retries}. Error: {ex.Message}");
+        //            if (attempt >= retries) throw;
+        //        }
+        //    }
+        //    return default; // Return the default value of T if all attempts fail
+        //}
 
-        internal static FormDataForProcessing CreateFormDataForProcessing(Invoice invoice, PaymentData paymentData, ServiceRequest authNumberServiceRequest)
+        internal static FormDataForProcessing CreateFormDataForProcessing(RequestInvoice invoice, PaymentData paymentData, ServiceRequest authNumberServiceRequest)
         {
             var serviceDateRequests = invoice.ServiceDateRequests;
             var serviceDateFormDataList = serviceDateRequests.Select(serviceDateRequest => new ServiceDateFormData
@@ -241,7 +241,7 @@ namespace HAI_Selenium.Utils
 
             return payDate;
         }
-        internal static string ValidateServiceDateMonth(Invoice invoice)
+        internal static string ValidateServiceDateMonth(RequestInvoice invoice)
         {
             Console.WriteLine("[ACTION] Validating service dates month ...");
 

@@ -368,3 +368,5 @@ FodyWeavers.xsd
 /Utils/ClaimStatusRequest.json
 /Utils/CreateClaimsRequest.json
 /Utils/PaymentBreakdown.json
+/Utils/InvoiceStatus.json
+/Utils/InvoiceRequest.json

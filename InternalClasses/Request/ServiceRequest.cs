@@ -1,4 +1,4 @@
-﻿namespace HAI_Selenium.InternalClasses
+﻿namespace HAI_Selenium.InternalClasses.Request
 {
     internal class ServiceRequest
     {

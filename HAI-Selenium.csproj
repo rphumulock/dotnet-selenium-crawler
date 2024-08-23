@@ -20,19 +20,19 @@
     <None Update=".env">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Utils\ClaimStatusRequest.json">
+    <None Update="Utils\InvoiceStatus.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Utils\PaymentBreakdown.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Utils\CreateClaimsRequest.json">
+    <None Update="Utils\InvoiceRequest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Workflows\" />
+    <Folder Include="NewFolder\" />
   </ItemGroup>
 
 </Project>

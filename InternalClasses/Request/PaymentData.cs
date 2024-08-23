@@ -1,4 +1,4 @@
-﻿namespace HAISelenium.InternalClasses
+﻿namespace HAI_Selenium.InternalClasses.Request
 {
     internal class PaymentData
     {

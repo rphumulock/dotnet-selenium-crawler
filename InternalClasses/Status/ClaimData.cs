@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace HAI_Selenium.InternalClasses
+namespace HAI_Selenium.InternalClasses.Status
 {
     internal class ClaimData
     {
