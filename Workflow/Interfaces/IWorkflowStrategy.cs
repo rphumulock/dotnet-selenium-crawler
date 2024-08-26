@@ -1,6 +1,6 @@
 ﻿using OpenQA.Selenium;
 
-namespace HAI_Selenium.Interfaces
+namespace HAI_Selenium.Workflow.Interfaces
 {
     public interface IWorkflowStrategy
     {

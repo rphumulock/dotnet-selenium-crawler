@@ -1,4 +1,4 @@
-﻿public class NavigateToAuthorizationRequestsAction : NavigationAction
+﻿internal class NavigateToAuthorizationRequestsAction : NavigationAction
 {
     protected override string DropdownSelector => "a[data-udfname='Authorization']";
     protected override string LinkSelector => "a[data-udfname='Requests']";

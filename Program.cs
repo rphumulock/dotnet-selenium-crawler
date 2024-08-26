@@ -1,6 +1,6 @@
-﻿using HAI_Selenium.Factories;
+﻿using OpenQA.Selenium;
 using HAI_Selenium.Utils;
-using OpenQA.Selenium;
+using HAI_Selenium.Workflow.Classes;
 
 namespace HAI_Selenium
 {
@@ -8,28 +8,28 @@ namespace HAI_Selenium
     {
         static void Main(string[] args)
         {
-            IWebDriver driver = null;
             try
             {
                 // Setup
-                Utilities.LoadEnvVariables();
-                Utilities.LogCurrentUserInfo();
-                driver = Utilities.SetupDriver();
+                EnvironmentUtils.LoadEnvVariables();
+                EnvironmentUtils.LogCurrentUserInfo();
 
-                ProcessRequest(driver);
+                // Get the action from environment and create workflow
+                string action = EnvironmentUtils.GetEnvironmentVariableOrThrow("ACTION");
+                var workflow = WorkflowFactory.GetWorkflow(action);
+
+                // Execute the workflow with retry logic
+                IWebDriver driver = WebDriverUtils.SetupDriver();
+                WorkflowExecutor.ExecuteWithRetry(workflow, driver);
             }
             catch (Exception ex)
             {
-                driver?.Close();
-                driver?.Quit();
+                Console.WriteLine($"An error occurred during workflow execution: {ex.Message}");
             }
-        }
-
-        private static void ProcessRequest(IWebDriver driver)
-        {
-            string action = Utilities.GetEnvironmentVariableOrThrow("ACTION");
-            var workflow = WorkflowFactory.GetWorkflow(action);
-            workflow.Execute(driver);
+            finally
+            {
+               
+            }
         }
     }
 }

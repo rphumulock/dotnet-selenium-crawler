@@ -1,4 +1,6 @@
-﻿namespace HAI_Selenium.InternalClasses.Request
+﻿using Newtonsoft.Json;
+
+namespace HAI_Selenium.InternalClasses.Request
 {
     internal class PaymentData
     {
@@ -28,6 +30,10 @@
             {
                 throw new KeyNotFoundException($"No amount found for {treatmentType} with {minVisits} visits.");
             }
+        }
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
     }
 }

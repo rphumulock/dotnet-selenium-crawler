@@ -9,7 +9,7 @@ public class NavigateToSiteAction : WorkflowStepBase
 
         try
         {
-            string url = Utilities.GetEnvironmentVariableOrThrow("URL");
+            string url = EnvironmentUtils.GetEnvironmentVariableOrThrow("URL");
             driver.Navigate().GoToUrl(url);
 
             Console.WriteLine($"[SUCCESS] Navigated to {url}");

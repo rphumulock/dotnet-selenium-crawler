@@ -1,0 +1,17 @@
+{
+  "InvoiceID": "INV-8899",
+  "ClaimRequests": [
+    {
+      "ClaimID": "202476261571",
+      "DateReceived": "08/07/2024"
+    },
+    {
+      "ClaimID": "202476261460",
+      "DateReceived": "08/07/2024"
+    },
+    {
+      "ClaimID": "202476243618",
+      "DateReceived": "08/06/2024"
+    }
+  ]
+} 

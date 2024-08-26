@@ -1,17 +1,14 @@
 ﻿using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
 
-public class SelectPatientAction : WorkflowStepBase
+internal class SelectPatientAction : WorkflowStepBase
 {
     protected override void PerformStep(IWebDriver driver)
     {
         Console.WriteLine("[ACTION] Selecting patient...");
 
-        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
         try
         {
-            IWebElement patientGrid = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("patientGrids")));
+            IWebElement patientGrid = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("patientGrid")));
             patientGrid.Click();
 
             Console.WriteLine("[INFO] Patient selected successfully.");

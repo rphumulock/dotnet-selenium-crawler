@@ -17,4 +17,14 @@
         }
         throw new KeyNotFoundException($"Key '{key}' not found in the context.");
     }
+
+    // Optional: Method to try and get a value without throwing
+    public T GetOrDefault<T>(string key, T defaultValue = default)
+    {
+        if (_contextData.TryGetValue(key, out var value))
+        {
+            return (T)value;
+        }
+        return defaultValue;
+    }
 }

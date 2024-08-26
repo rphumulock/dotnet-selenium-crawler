@@ -59,45 +59,45 @@
 //            Console.WriteLine("[SUCCESS] Claim processed.");
 //        }
 
-//        internal static void ProcessFormHeader(IWebDriver driver, PatientFormData patientFormData)
-//        {
-//            var wait = Utilities.CreateWebDriverWait(driver);
+//internal static void ProcessFormHeader(IWebDriver driver, PatientFormData patientFormData)
+//{
+//    var wait = Utilities.CreateWebDriverWait(driver);
 
-//            ClickElement(driver, wait, By.XPath("//div[label[contains(text(), 'MEDICAID')]]"));
-//            Console.WriteLine("[INFO] Selected 'Medicaid' option.");
+//    ClickElement(driver, wait, By.XPath("//div[label[contains(text(), 'MEDICAID')]]"));
+//    Console.WriteLine("[INFO] Selected 'Medicaid' option.");
 
-//            ClickElement(driver, wait, By.XPath("//div[label[contains(text(), 'Self')]]"));
-//            Console.WriteLine("[INFO] Selected 'Self' option.");
+//    ClickElement(driver, wait, By.XPath("//div[label[contains(text(), 'Self')]]"));
+//    Console.WriteLine("[INFO] Selected 'Self' option.");
 
-//            EnterText(driver, wait, By.Id("txtInsuredID"), patientFormData.patientPolicyNumber);
-//            Console.WriteLine("[INFO] Entered 'External ID'.");
+//    EnterText(driver, wait, By.Id("txtInsuredID"), patientFormData.patientPolicyNumber);
+//    Console.WriteLine("[INFO] Entered 'External ID'.");
 
-//            IWebElement signedInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPatientAuthSign")));
-//            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.TextToBePresentInElementValue(signedInput, "Signature on File"));
-//            Console.WriteLine("[INFO] Verified 'Signature on File'.");
+//    IWebElement signedInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPatientAuthSign")));
+//    wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.TextToBePresentInElementValue(signedInput, "Signature on File"));
+//    Console.WriteLine("[INFO] Verified 'Signature on File'.");
 
-//            IWebElement signedDate = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPatientAuthDate")));
-//            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.TextToBePresentInElementValue(signedDate, DateTime.Now.ToString("MM/dd/yyyy")));
-//            Console.WriteLine("[INFO] Verified signed date.");
+//    IWebElement signedDate = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPatientAuthDate")));
+//    wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.TextToBePresentInElementValue(signedDate, DateTime.Now.ToString("MM/dd/yyyy")));
+//    Console.WriteLine("[INFO] Verified signed date.");
 
-//            var indexedServiceDateRequests = patientFormData.patientDiagnosisCodes.Select((diagnosisCode, index) => new { diagnosisCode, index });
-//            foreach (var indexedItem in indexedServiceDateRequests)
-//            {
-//                int index = indexedItem.index + 1;
-//                IWebElement diagnosisCodeInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDiagnosis" + index)));
-//                diagnosisCodeInput.SendKeys(Keys.Control + "a");
-//                diagnosisCodeInput.SendKeys(Keys.Delete);
-//                diagnosisCodeInput.SendKeys(indexedItem.diagnosisCode);
-//            }
+//    var indexedServiceDateRequests = patientFormData.patientDiagnosisCodes.Select((diagnosisCode, index) => new { diagnosisCode, index });
+//    foreach (var indexedItem in indexedServiceDateRequests)
+//    {
+//        int index = indexedItem.index + 1;
+//        IWebElement diagnosisCodeInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDiagnosis" + index)));
+//        diagnosisCodeInput.SendKeys(Keys.Control + "a");
+//        diagnosisCodeInput.SendKeys(Keys.Delete);
+//        diagnosisCodeInput.SendKeys(indexedItem.diagnosisCode);
+//    }
 
-//            Console.WriteLine("[INFO] Entered diagnosis codes.");
+//    Console.WriteLine("[INFO] Entered diagnosis codes.");
 
-//            IWebElement authNumberInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPriorAuthNumber")));
-//            authNumberInput.SendKeys(Keys.Control + "a");
-//            authNumberInput.SendKeys(Keys.Delete);
-//            authNumberInput.SendKeys(patientFormData.authNumber);
-//            Console.WriteLine("[INFO] Entered authorization number.");
-//        }
+//    IWebElement authNumberInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPriorAuthNumber")));
+//    authNumberInput.SendKeys(Keys.Control + "a");
+//    authNumberInput.SendKeys(Keys.Delete);
+//    authNumberInput.SendKeys(patientFormData.authNumber);
+//    Console.WriteLine("[INFO] Entered authorization number.");
+//}
 
 //        internal static void ProcessFormServiceDates(IWebDriver driver, List<ServiceDateFormData> serviceDatesFormData, int batchNumber)
 //        {
@@ -165,24 +165,24 @@
 //            }
 //        }
 
-//        internal static void ProcessFormFooter(IWebDriver driver)
-//        {
-//            var wait = Utilities.CreateWebDriverWait(driver);
+//internal static void ProcessFormFooter(IWebDriver driver)
+//{
+//    var wait = Utilities.CreateWebDriverWait(driver);
 
-//            IWebElement einNumberInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtFedTaxID")));
-//            wait.Until(driver => !string.IsNullOrEmpty(einNumberInput.GetAttribute("value")));
-//            Console.WriteLine("[INFO] Verified EIN number.");
+//    IWebElement einNumberInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtFedTaxID")));
+//    wait.Until(driver => !string.IsNullOrEmpty(einNumberInput.GetAttribute("value")));
+//    Console.WriteLine("[INFO] Verified EIN number.");
 
-//            IWebElement physPhoneInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPhysPhone")));
-//            wait.Until(driver => !string.IsNullOrEmpty(physPhoneInput.GetAttribute("value")));
-//            Console.WriteLine("[INFO] Verified physician's phone number.");
+//    IWebElement physPhoneInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPhysPhone")));
+//    wait.Until(driver => !string.IsNullOrEmpty(physPhoneInput.GetAttribute("value")));
+//    Console.WriteLine("[INFO] Verified physician's phone number.");
 
-//            IWebElement physSignedDateInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPhysicianSignedDate")));
-//            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.TextToBePresentInElementValue(physSignedDateInput, DateTime.Now.ToString("MM/dd/yyyy")));
-//            Console.WriteLine("[INFO] Verified physician's signed date.");
-//        }
+//    IWebElement physSignedDateInput = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPhysicianSignedDate")));
+//    wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.TextToBePresentInElementValue(physSignedDateInput, DateTime.Now.ToString("MM/dd/yyyy")));
+//    Console.WriteLine("[INFO] Verified physician's signed date.");
+//}
 
-//        // HELPERS
+//        HELPERS
 //        private static void ClickElement(IWebDriver driver, WebDriverWait wait, By by)
 //        {
 //            IWebElement element = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(by));
@@ -218,7 +218,7 @@
 //        }
 
 
-//        // Method to wait until the body has the 'modal-open' class
+//        Method to wait until the body has the 'modal-open' class
 //        public static void WaitForModalToOpen(IWebDriver driver, int timeoutInSeconds)
 //        {
 //            var wait = Utilities.CreateWebDriverWait(driver);
@@ -230,7 +230,7 @@
 //            Console.WriteLine("[INFO] Modal opened.");
 //        }
 
-//        // Method to wait until the body no longer has the 'modal-open' class
+//        Method to wait until the body no longer has the 'modal-open' class
 //        public static void WaitForModalToClose(IWebDriver driver, int timeoutInSeconds)
 //        {
 //            var wait = Utilities.CreateWebDriverWait(driver);

@@ -1,4 +1,4 @@
-﻿public class NavigateToClaimsStatusAction : NavigationAction
+﻿internal class NavigateToClaimsStatusAction : NavigationAction
 {
     protected override string DropdownSelector => "a[data-udfname='Claims']";
     protected override string LinkSelector => "a[data-udfname='Claim Status']";

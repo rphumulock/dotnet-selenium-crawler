@@ -1,9 +1,15 @@
-﻿namespace HAI_Selenium.InternalClasses.Request
-{
-    internal class FormDataForProcessing
-    {
+﻿//using Newtonsoft.Json;
 
-        public required PatientFormData patientFormData;
-        public required List<List<ServiceDateFormData>> serviceDatesFormData;
-    }
-}
+//namespace HAI_Selenium.InternalClasses.Request
+//{
+//    internal class FormDataForProcessing
+//    {
+//        public required PatientFormData patientFormData;
+
+//        public required List<List<ServiceDateFormData>> serviceDatesFormData;
+//        public override string ToString()
+//        {
+//            return JsonConvert.SerializeObject(this, Formatting.Indented);
+//        }
+//    }
+//}

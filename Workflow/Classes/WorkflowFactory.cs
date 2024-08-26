@@ -1,7 +1,6 @@
-﻿using HAI_Selenium.Interfaces;
-using HAI_Selenium.Workflows;
+﻿using HAI_Selenium.Workflow.Interfaces;
 
-namespace HAI_Selenium.Factories
+namespace HAI_Selenium.Workflow.Classes
 {
     public static class WorkflowFactory
     {

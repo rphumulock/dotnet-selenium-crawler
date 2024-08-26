@@ -1,8 +1,6 @@
 ﻿using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
-using System;
 
-public abstract class NavigationAction : WorkflowStepBase
+internal abstract class NavigationAction : WorkflowStepBase
 {
     protected abstract string DropdownSelector { get; }
     protected abstract string LinkSelector { get; }
@@ -13,15 +11,15 @@ public abstract class NavigationAction : WorkflowStepBase
     {
         Console.WriteLine($"[ACTION] Navigating to {DropdownName} -> {LinkName}...");
 
-        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-
         try
         {
-            IWebElement dropdownToggle = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(DropdownSelector)));
+            // Use the WaitUntil method from WorkflowStepBase to wait for the dropdown to be clickable
+            IWebElement dropdownToggle = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(DropdownSelector)));
             dropdownToggle.Click();
             Console.WriteLine($"[INFO] {DropdownName} dropdown clicked.");
 
-            IWebElement link = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector(LinkSelector)));
+            // Use the WaitUntil method from WorkflowStepBase to wait for the link to be visible
+            IWebElement link = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector(LinkSelector)));
             link.Click();
             Console.WriteLine($"[INFO] {LinkName} link clicked.");
         }

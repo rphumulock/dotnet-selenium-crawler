@@ -1,4 +1,6 @@
-﻿namespace HAI_Selenium.InternalClasses.Request
+﻿using Newtonsoft.Json;
+
+namespace HAI_Selenium.InternalClasses.Request
 {
     internal class ServiceRequest
     {
@@ -17,19 +19,7 @@
         public required string ModifiedDate { get; set; }
         public override string ToString()
         {
-            return $"ID: {ID}," +
-                $" SRID: {SRID}," +
-                $" SRAuth: {SRAuth}," +
-                $" AuthApprov: {AuthApprov}," +
-                $" AuthStatus: {AuthStatus}," +
-                $" ProvSite: {ProvSite}," +
-                $" Phone: {Phone}," +
-                $" Procedure: {Procedure}," +
-                $" StartDate: {StartDate}," +
-                $" EndDate: {EndDate}," +
-                $" Units: {Units}," +
-                $" SubmissionDate: {SubmissionDate}," +
-                $" ModifiedDate: {ModifiedDate}";
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
     }
 }
