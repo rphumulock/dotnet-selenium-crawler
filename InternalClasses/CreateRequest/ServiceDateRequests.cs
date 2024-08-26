@@ -1,0 +1,22 @@
+﻿using Newtonsoft.Json;
+
+namespace HAI_Selenium.InternalClasses.CreateRequest
+{
+    /// <summary>
+    /// Incoming Request data for Service Dates.
+    /// </summary>
+    internal class ServiceDateRequests
+    {
+        public required string ServiceDate { get; set; }
+        public required string Counselor { get; set; }
+        public required string StartTime { get; set; }
+        public required string EndTime { get; set; }
+        public required string TreatmentType { get; set; }
+        public string? Other { get; set; }
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+    }
+}

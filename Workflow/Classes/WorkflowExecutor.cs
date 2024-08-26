@@ -1,5 +1,5 @@
 ﻿using HAI_Selenium.Workflow.Interfaces;
-using HAI_Selenium.Utils;
+using HAI_Selenium.Utilities;
 
 using OpenQA.Selenium;
 

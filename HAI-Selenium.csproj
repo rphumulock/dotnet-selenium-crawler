@@ -26,13 +26,13 @@
     <None Update=".env">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Utils\mockData\InvoiceStatus.json">
+    <None Update="Utilities\mockData\InvoiceStatusRequest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Utils\mockData\PaymentBreakdown.json">
+    <None Update="Utilities\mockData\PaymentBreakdown.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Utils\mockData\InvoiceRequest.json">
+    <None Update="Utilities\mockData\InvoiceCreateClaimsRequest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

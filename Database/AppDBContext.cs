@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using HAI_Selenium.Utils;
+using HAI_Selenium.Utilities;
 using HAI_Selenium.Database.Models;
 
 namespace HAI_Selenium.Data

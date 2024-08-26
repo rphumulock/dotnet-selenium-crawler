@@ -1,5 +1,5 @@
-﻿using HAI_Selenium.Utils;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
+using HAI_Selenium.Utilities;
 
 namespace HAI_Selenium.Workflow.Steps.Shared
 {
