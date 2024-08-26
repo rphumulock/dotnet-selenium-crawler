@@ -1,7 +1,8 @@
-﻿using HAI_Selenium.InternalActions;
-using HAI_Selenium.Workflow.AbstractClasses;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
 using HAI_Selenium.InternalClasses.Invoice;
+using HAI_Selenium.Workflow.AbstractClasses;
+using HAI_Selenium.Workflow.Steps.Shared;
+using HAI_Selenium.Workflow.Steps.RequestStatus;
 
 namespace HAI_Selenium.Workflow
 {
@@ -49,6 +50,8 @@ namespace HAI_Selenium.Workflow
                 {
                     Console.WriteLine($"Things: {item}");
                 }
+
+                driver.Quit();
             }
             catch (Exception ex)
             {

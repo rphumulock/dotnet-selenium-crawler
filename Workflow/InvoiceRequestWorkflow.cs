@@ -1,7 +1,7 @@
-﻿using HAI_Selenium.InternalActions;
-using HAI_Selenium.InternalActions.Claim;
-using HAI_Selenium.InternalClasses.Request;
+﻿using HAI_Selenium.InternalClasses.Request;
 using HAI_Selenium.Workflow.AbstractClasses;
+using HAI_Selenium.Workflow.Steps.Shared;
+using HAI_Selenium.Workflow.Steps.RequestCreate;
 using OpenQA.Selenium;
 
 namespace HAI_Selenium.Workflow
@@ -48,8 +48,9 @@ namespace HAI_Selenium.Workflow
                         .AddStep(new ProcessClaimFormFooterAction())
                         .AddStep(new CancelClaimAction(Context));
                 }
-
                 processDataChain.Execute(driver);
+
+                driver.Quit();
             }
             catch (Exception ex)
             {
