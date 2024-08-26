@@ -18,7 +18,7 @@ namespace HAI_Selenium.InternalActions
 
             try
             {
-                    IWebElement claimNumberInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtCS_ClaimNumber")));
+                IWebElement claimNumberInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtCS_ClaimNumber")));
                     claimNumberInput.Click();
                     claimNumberInput.SendKeys(Keys.Control + "a");
                     claimNumberInput.SendKeys(Keys.Delete);

@@ -50,8 +50,8 @@ namespace HAI_Selenium.InternalActions.Claim
 
                     IWebElement cptInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtCPT" + index)));
                     cptInput.Click();
-                    WaitForModalToOpen(driver, 20);
-                    WaitForModalToClose(driver, 20);
+                    WaitForModalToOpen(driver);
+                    WaitForModalToClose(driver);
                     cptInput.SendKeys(Keys.Control + "a");
                     cptInput.SendKeys(Keys.Delete);
                     cptInput.SendKeys(indexedItem.serviceDate.CPT);

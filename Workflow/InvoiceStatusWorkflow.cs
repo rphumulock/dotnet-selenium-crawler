@@ -1,6 +1,4 @@
-﻿using HAI_Selenium.InternalActions.Claim;
-using HAI_Selenium.InternalActions;
-using HAI_Selenium.InternalClasses.Request;
+﻿using HAI_Selenium.InternalActions;
 using HAI_Selenium.Workflow.AbstractClasses;
 using OpenQA.Selenium;
 using HAI_Selenium.InternalClasses.Invoice;
@@ -21,41 +19,36 @@ namespace HAI_Selenium.Workflow
         {
             try
             {
+                WorkflowChain loadDataChain = new WorkflowChain()
+                    .AddStep(new LoadStatusInvoiceDataAction(Context));
+                loadDataChain.Execute(driver);
+
                 WorkflowChain workflowChain = new WorkflowChain()
-                    .AddStep(new LoadStatusInvoiceDataAction(Context))
                     .AddStep(new NavigateToSiteAction())
                     .AddStep(new LoginAction())
                     .AddStep(new NavigateToClaimsStatusAction());
 
-                StatusInvoice invoice = Context.Get<StatusInvoice>("Invoice");
-                var indexedBatchedServiceDates = invoice.ClaimRequests.Select((claimRequest, index) => new { claimRequest, index }).ToList();
+                Context.Set("ClaimStatuses", new List<ClaimStatusContainer>());
+
+                var indexedBatchedServiceDates = Context.Get<StatusInvoice>("Invoice").ClaimRequests.Select((claimRequest, index) => new { claimRequest, index }).ToList();
                 foreach (var indexItem in indexedBatchedServiceDates)
                 {
-                    var batchNumber = indexItem.index + 1;
-
                     workflowChain
-                        .AddStep(new FindClaimAction(indexItem.claimRequest));
+                        .AddStep(new FindClaimAction(indexItem.claimRequest))
+                        .AddStep(new ProcessClaimHeaderAction(Context))
+                        .AddStep(new OpenClaimsLineItemsAction(Context))
+                        .AddStep(new ProcessClaimLineItemsAction(Context))
+                        .AddStep(new CreateClaimStatusAction(Context));
 
                 }
                 workflowChain.Execute(driver);
 
+                List<ClaimStatusContainer> cs = Context.Get<List<ClaimStatusContainer>>("ClaimStatuses");
 
-                //            var claimsList = invoice.Claims.Select((claim, index) => new { claim, index }).ToList();
-                //            List<ClaimDetails> allClaimsDetails = new List<ClaimDetails>();
-
-                //            foreach (var indexItem in claimsList)
-                //            {
-                //                Console.WriteLine($"[ACTION] Processing claim for batch #{indexItem.claim.ClaimID}...");
-                //                Utilities.Retry(() => FindClaim(driver, indexItem.claim), 3, $"[WARNING] Failed to find claim #{indexItem.claim.ClaimID}. Retrying...");
-
-                //                ClaimDetails claimDetails = Utilities.Retry(() => ProcessClaimStatus(driver, indexItem.claim), 3, $"[WARNING] Failed to process status for claim #{indexItem.claim.ClaimID}. Retrying...");
-
-                //                allClaimsDetails.Add(claimDetails);
-
-                //                //Console.WriteLine($"[INFO] Processed claim #{indexItem.claim.ClaimID}. Claim Details: {claimDetails}");
-                //            }
-
-
+                foreach (var item in cs)
+                {
+                    Console.WriteLine($"Things: {item}");
+                }
             }
             catch (Exception ex)
             {

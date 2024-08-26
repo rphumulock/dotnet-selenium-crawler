@@ -1,21 +1,20 @@
 ﻿using HAI_Selenium.InternalClasses.Status;
 using OpenQA.Selenium;
-using System.Security.Claims;
 
 namespace HAI_Selenium.InternalActions
 {
-    internal class ProcessClaimHeader : WorkflowStepBase
+    internal class ProcessClaimHeaderAction : WorkflowStepBase
     {
-        protected ClaimRequest ClaimRequest { get; init; }
+        protected WorkflowContext Context { get; init; }
 
-        internal ProcessClaimHeader(ClaimRequest claimRequest)
+        internal ProcessClaimHeaderAction(WorkflowContext context)
         {
-            ClaimRequest = claimRequest;
+            Context = context;
         }
 
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine($"[ACTION] Looking up claim #{ClaimRequest.ClaimID}...");
+            Console.WriteLine($"[ACTION] Processing Claim...");
 
             try
             {
@@ -30,7 +29,7 @@ namespace HAI_Selenium.InternalActions
                 var claimData = claimsTableRows
                     .Select(tr => tr.FindElements(By.CssSelector("td")).Select(td => td.Text.Trim()).ToList())
                     .Where(cellTexts => cellTexts.Count > 10) // Ensure there are enough cells
-                    .Select(cellTexts => new ClaimData
+                    .Select(cellTexts => new ClaimContainer
                     {
                         ClaimNumber = cellTexts[1],
                         NPI = cellTexts[2],
@@ -50,10 +49,10 @@ namespace HAI_Selenium.InternalActions
                     throw new Exception("[ERROR] No valid claim data found.");
                 }
 
-                Context.Set("Claim" + ClaimRequest.ClaimID, claimData);
+                Context.Set("ClaimContainer", claimData);
+                Context.Set("OpenClaimLineItemsButton", claimsTableRows[0]);
 
                 Console.WriteLine("[INFO] Claim header processed.");
-
             }
             catch (Exception ex)
             {

@@ -14,12 +14,13 @@ internal class LoadStatusInvoiceDataAction(WorkflowContext context) : WorkflowSt
         {
             // Load JSON data for InvoiceRequest and PaymentData
             StatusInvoice invoice = FileUtils.LoadJsonFile<StatusInvoice>("Utils/mockData/InvoiceStatus.json");
+            
             Console.WriteLine("[INFO] JSON data loaded successfully.");
 
             // Set data in the workflow context
             Context.Set("Invoice", invoice);
 
-            Console.WriteLine("[INFO] Invoice and PaymentData set in context.");
+            Console.WriteLine("[INFO] Invoice set in context.");
         }
         catch (Exception ex)
         {

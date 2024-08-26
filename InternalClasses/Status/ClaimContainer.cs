@@ -2,7 +2,7 @@
 
 namespace HAI_Selenium.InternalClasses.Status
 {
-    internal class ClaimData
+    internal class ClaimContainer
     {
         public required string ClaimNumber { get; set; }
         public required string NPI { get; set; }
