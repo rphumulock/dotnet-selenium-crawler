@@ -1,6 +1,9 @@
-﻿using OpenQA.Selenium;
+﻿using Microsoft.EntityFrameworkCore;
+using OpenQA.Selenium;
 using HAI_Selenium.Utilities;
 using HAI_Selenium.Workflow.Classes;
+using HAI_Selenium.Data; // To use ApplicationDbContext
+using HAI_Selenium.Database.Models; // To use InvoiceRequest model
 
 namespace HAI_Selenium
 {
@@ -10,11 +13,30 @@ namespace HAI_Selenium
         {
             try
             {
-                // Setup
+                // Setup environment variables and logging
                 EnvironmentUtils.LoadEnvVariables();
                 EnvironmentUtils.LogCurrentUserInfo();
 
-                // Get the action from environment and create workflow
+                // Initialize the database context
+                using (var dbContext = new ApplicationDbContext())
+                {
+                    // Example: Add a new InvoiceRequest
+                    var newInvoiceRequest = new InvoiceRequest
+                    {
+                        // Set properties for your InvoiceRequest object
+                    };
+                    dbContext.InvoiceRequests.Add(newInvoiceRequest);
+                    dbContext.SaveChanges(); // Save changes to the database
+
+                    // Example: Query the InvoiceRequests table
+                    var invoiceRequests = dbContext.InvoiceRequests.ToList();
+                    foreach (var request in invoiceRequests)
+                    {
+                        Console.WriteLine($"InvoiceRequest ID: {request.Id}");
+                    }
+                }
+
+                // Get the action from the environment and create workflow
                 string action = EnvironmentUtils.GetEnvironmentVariableOrThrow("ACTION");
                 var workflow = WorkflowFactory.GetWorkflow(action);
 
@@ -28,8 +50,14 @@ namespace HAI_Selenium
             }
             finally
             {
-               
+                // Clean up resources if needed
             }
+        }
+
+        static void ApplyMigrations(ApplicationDbContext dbContext)
+        {
+            Console.WriteLine("Applying any pending migrations...");
+            dbContext.Database.Migrate(); // Apply any pending migrations
         }
     }
 }

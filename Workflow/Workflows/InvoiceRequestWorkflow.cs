@@ -3,6 +3,7 @@ using HAI_Selenium.InternalClasses.CreateRequest;
 using HAI_Selenium.Workflow.AbstractClasses;
 using HAI_Selenium.Workflow.Steps.Shared;
 using HAI_Selenium.Workflow.Steps.CreateRequest;
+using HAI_Selenium.Utilities;
 
 namespace HAI_Selenium.Workflow.Workflows
 {
@@ -54,10 +55,20 @@ namespace HAI_Selenium.Workflow.Workflows
 
                 driver.Quit();
             }
+            catch (RecoverableError ex)
+            {
+                Console.WriteLine($"[ERROR] Non-recoverable error occurred: {ex.Message}");
+                throw; // Re-throw the exception to indicate final failure
+            }
+            catch (NonRecoverableError ex)
+            {
+                Console.WriteLine($"[ERROR] Non-recoverable error occurred: {ex.Message}");
+                throw; // Re-throw the exception to indicate final failure
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error during workflow process: {ex.Message}");
-                throw; // Re-throw to allow outer logic to handle retries
+                throw;
             }
         }
     }

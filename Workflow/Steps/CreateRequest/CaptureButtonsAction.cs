@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using HAI_Selenium.Utilities;
+using OpenQA.Selenium;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
@@ -27,7 +28,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] An unexpected error occurred while processing form: {ex.Message}");
-                throw;
+
+                throw new RecoverableError("A non-recoverable error occurred.", ex);
             }
         }
     }

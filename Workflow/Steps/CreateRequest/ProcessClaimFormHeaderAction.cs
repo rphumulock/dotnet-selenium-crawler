@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using HAI_Selenium.InternalClasses.CreateRequest;
+using HAI_Selenium.Utilities;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
@@ -20,6 +21,9 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             try
             {
                 ClaimHeaderFormData formHeaderData = Context.Get<ClaimHeaderFormData>("FormHeaderData");
+                var authorizationNumber = formHeaderData.AuthorizationNumber;
+                var policyNumber = formHeaderData.PolicyNumber;
+                var diagnosisCodes = formHeaderData.DiagnosisCodes;
 
                 IWebElement medicaidCheckbox = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath("//div[label[contains(text(), 'MEDICAID')]]")));
                 medicaidCheckbox.Click();
@@ -34,7 +38,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                 IWebElement externalIDInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtInsuredID")));
                 externalIDInput.SendKeys(Keys.Control + "a");
                 externalIDInput.SendKeys(Keys.Delete);
-                externalIDInput.SendKeys(formHeaderData.PolicyNumber);
+                externalIDInput.SendKeys(policyNumber);
 
                 Console.WriteLine("[INFO] Entered 'External ID'.");
 
@@ -48,15 +52,26 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
                 Console.WriteLine("[INFO] Verified signed date.");
 
-                var indexedServiceDateRequests = formHeaderData.DiagnosisCodes.Select((diagnosisCode, index) => new { diagnosisCode, index });
-                foreach (var indexedItem in indexedServiceDateRequests)
+
+                try
                 {
-                    int index = indexedItem.index + 1;
-                    IWebElement diagnosisCodeInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDiagnosis" + index)));
-                    diagnosisCodeInput.SendKeys(Keys.Control + "a");
-                    diagnosisCodeInput.SendKeys(Keys.Delete);
-                    diagnosisCodeInput.SendKeys(indexedItem.diagnosisCode);
+                    var indexedServiceDateRequests = diagnosisCodes.Select((diagnosisCode, index) => new { diagnosisCode, index });
+                    foreach (var indexedItem in indexedServiceDateRequests)
+                    {
+                        int index = indexedItem.index + 1;
+                        IWebElement diagnosisCodeInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDiagnosis" + index)));
+                        diagnosisCodeInput.SendKeys(Keys.Control + "a");
+                        diagnosisCodeInput.SendKeys(Keys.Delete);
+                        diagnosisCodeInput.SendKeys(indexedItem.diagnosisCode);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] An unexpected error occurred while processing form: {ex.Message}");
+
+                    throw new NonRecoverableError(ex.Message, ex);
+                }
+
                 Console.WriteLine("[INFO] Entered diagnosis codes.");
 
                 IWebElement authNumberInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPriorAuthNumber")));
@@ -65,6 +80,16 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                 authNumberInput.SendKeys(formHeaderData.AuthorizationNumber);
 
                 Console.WriteLine("[INFO] Entered authorization number.");
+            }
+            catch (RecoverableError ex)
+            {
+                Console.WriteLine($"[ERROR] Recoverable error occurred while processing form: {ex.Message}");
+                throw new RecoverableError(ex.Message, ex);
+            }
+            catch (NonRecoverableError ex)
+            {
+                Console.WriteLine($"[ERROR] Non-Recoverable error occurred while processing form: {ex.Message}");
+                throw new NonRecoverableError(ex.Message, ex);
             }
             catch (Exception ex)
             {

@@ -7,7 +7,7 @@ namespace HAI_Selenium.Workflow.Classes
 {
     public static class WorkflowExecutor
     {
-        private const int MaxRetries = 3;
+        private const int MaxRetries = 1;
 
         public static void ExecuteWithRetry(IWorkflowStrategy workflow, IWebDriver driver)
         {
@@ -22,6 +22,20 @@ namespace HAI_Selenium.Workflow.Classes
 
                     Console.WriteLine("[SUCCESS] Workflow completed successfully.");
                     return; // Exit if successful
+                }
+                catch (RecoverableError ex)
+                {
+                    Console.WriteLine($"[ERROR] Non-recoverable error occurred: {ex.Message}");
+                    driver?.Quit(); // Close the driver
+                    ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex); // Use the ErrorHandler class
+                    throw; // Re-throw the exception to indicate final failure
+                }
+                catch (NonRecoverableError ex)
+                {
+                    Console.WriteLine($"[ERROR] Non-recoverable error occurred: {ex.Message}");
+                    driver?.Quit(); // Close the driver
+                    ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex); // Use the ErrorHandler class
+                    throw; // Re-throw the exception to indicate final failure
                 }
                 catch (Exception ex)
                 {

@@ -5,19 +5,31 @@ namespace HAI_Selenium.Utilities
 {
     internal static class ErrorHandlerUtils
     {
+        //public static void AnalyzeAndHandleFinalException(Exception ex)
+        //{
+        //    if (IsNetworkError(ex))
+        //    {
+        //        HandleNetworkError(ex);
+        //    }
+        //    else if (IsSeleniumError(ex))
+        //    {
+        //        HandleSeleniumError(ex);
+        //    }
+        //    else
+        //    {
+        //        HandleUnexpectedError(ex);
+        //    }
+        //}
+
         public static void AnalyzeAndHandleFinalException(Exception ex)
         {
-            if (IsNetworkError(ex))
+            if (ex is RecoverableError)
             {
-                HandleNetworkError(ex);
+                HandleRecoverableError(ex);
             }
-            else if (IsSeleniumError(ex))
+            else if (ex is NonRecoverableError)
             {
-                HandleSeleniumError(ex);
-            }
-            else
-            {
-                HandleUnexpectedError(ex);
+                HandleNonRecoverableError(ex);
             }
         }
 
@@ -39,6 +51,17 @@ namespace HAI_Selenium.Utilities
                    ex is ElementClickInterceptedException ||
                    ex is UnhandledAlertException ||
                    ex is WebDriverException;
+        }
+        private static void HandleRecoverableError(Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Recoverable error: {ex.Message}");
+            // Additional handling for network errors, like retrying or notifying the user
+        }
+
+        private static void HandleNonRecoverableError(Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Non-Recoverable error: {ex.Message}");
+            // Additional handling for network errors, like retrying or notifying the user
         }
 
         private static void HandleNetworkError(Exception ex)

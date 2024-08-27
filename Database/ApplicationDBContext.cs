@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using HAI_Selenium.Database.Models; // Ensure this is the correct namespace
 using HAI_Selenium.Utilities;
-using HAI_Selenium.Database.Models;
 
 namespace HAI_Selenium.Data
 {
-    public class AppDbContext : DbContext
+    public class ApplicationDbContext : DbContext
     {
-        public DbSet<InvoiceRequest> InvoiceRequests { get; set; }
+        public DbSet<InvoiceRequest> InvoiceRequests { get; set; } // Ensure this DbSet exists
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -24,10 +24,11 @@ namespace HAI_Selenium.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<InvoiceRequest>()
-                .HasKey(ir => ir.Id); // Setting primary key
+                .HasKey(ir => ir.Id); // Set primary key
+
             modelBuilder.Entity<InvoiceRequest>()
                 .Property(ir => ir.Id)
-                .ValueGeneratedOnAdd(); // Serial primary key configuration
+                .ValueGeneratedOnAdd(); // Auto-increment primary key
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using HAI_Selenium.Utilities;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
 
@@ -16,6 +17,28 @@ public abstract class WorkflowStepBase : IWorkflowStep
             {
                 PerformStep(driver); // Attempt to perform the step
                 return; // Exit the method if successful
+            }
+            catch (RecoverableError ex)
+            {
+                attempts++;
+                Console.WriteLine($"[ERROR] Attempt {attempts} failed with exception: {ex.Message}");
+
+                if (attempts >= MaxRetries)
+                {
+                    Console.WriteLine($"[FAILURE] Max retry attempts reached. Halting workflow.");
+                    throw new RecoverableError(ex.Message, ex); // Re-throw the exception to be handled by the outer retry mechanism
+                }
+            }
+            catch (NonRecoverableError ex)
+            {
+                attempts++;
+                Console.WriteLine($"[ERROR] Attempt {attempts} failed with exception: {ex.Message}");
+
+                if (attempts >= MaxRetries)
+                {
+                    Console.WriteLine($"[FAILURE] Max retry attempts reached. Halting workflow.");
+                    throw new NonRecoverableError(ex.Message, ex); // Re-throw the exception to be handled by the outer retry mechanism
+                }
             }
             catch (Exception ex)
             {
