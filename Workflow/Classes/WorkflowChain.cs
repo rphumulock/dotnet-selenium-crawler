@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium;
+using Serilog;
 
 public class WorkflowChain
 {
@@ -16,12 +17,13 @@ public class WorkflowChain
         {
             try
             {
+                Log.Information("Executing workflow step: {StepName}", step.GetType().Name);
                 step.Execute(driver);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Exception occurred during step execution: {ex.Message}");
-                throw; // Propagate the exception to be handled by the outer retry mechanism
+                Log.Error(ex, "Exception occurred during step execution: {StepName}", step.GetType().Name);
+                throw;
             }
         }
     }

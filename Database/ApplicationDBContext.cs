@@ -30,5 +30,11 @@ namespace HAI_Selenium.Data
                 .Property(ir => ir.Id)
                 .ValueGeneratedOnAdd(); // Auto-increment primary key
         }
+
+        protected static void ApplyMigrations(ApplicationDbContext dbContext)
+        {
+            Console.WriteLine("Applying any pending migrations...");
+            dbContext.Database.Migrate(); // Apply any pending migrations
+        }
     }
 }

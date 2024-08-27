@@ -1,13 +1,13 @@
-﻿using HAI_Selenium.Workflow.Interfaces;
+﻿using OpenQA.Selenium;
+using Serilog;
+using HAI_Selenium.Workflow.Interfaces;
 using HAI_Selenium.Utilities;
-
-using OpenQA.Selenium;
 
 namespace HAI_Selenium.Workflow.Classes
 {
     public static class WorkflowExecutor
     {
-        private const int MaxRetries = 1;
+        private const int MaxRetries = 3;
 
         public static void ExecuteWithRetry(IWorkflowStrategy workflow, IWebDriver driver)
         {
@@ -15,46 +15,33 @@ namespace HAI_Selenium.Workflow.Classes
             {
                 try
                 {
-                    Console.WriteLine($"Starting workflow attempt {attempt}");
+                    Log.Information("Starting workflow attempt {Attempt}", attempt);
 
                     // Execute the workflow process
                     workflow.Execute(driver);
 
-                    Console.WriteLine("[SUCCESS] Workflow completed successfully.");
+                    Log.Information("Workflow completed successfully.");
                     return; // Exit if successful
-                }
-                catch (RecoverableError ex)
-                {
-                    Console.WriteLine($"[ERROR] Non-recoverable error occurred: {ex.Message}");
-                    driver?.Quit(); // Close the driver
-                    ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex); // Use the ErrorHandler class
-                    throw; // Re-throw the exception to indicate final failure
-                }
-                catch (NonRecoverableError ex)
-                {
-                    Console.WriteLine($"[ERROR] Non-recoverable error occurred: {ex.Message}");
-                    driver?.Quit(); // Close the driver
-                    ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex); // Use the ErrorHandler class
-                    throw; // Re-throw the exception to indicate final failure
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[ERROR] Attempt {attempt} failed with exception: {ex.Message}");
+                    Log.Error(ex, "Attempt {Attempt} failed with exception.", attempt);
 
                     if (attempt == MaxRetries)
                     {
-                        Console.WriteLine("[FAILURE] Max retry attempts reached. Analyzing exception...");
+                        Log.Error("Max retry attempts reached. Analyzing exception...");
                         driver?.Quit(); // Close the driver
                         ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex); // Use the ErrorHandler class
-                        throw; // Re-throw the exception to indicate final failure after all retries
+                    }
+                    else
+                    {
+                        // Retry logic
+                        HandleRetry(ref driver, attempt);
                     }
 
-                    // Retry logic
-                    HandleRetry(ref driver, attempt);
                 }
             }
         }
-
 
         private static void HandleRetry(ref IWebDriver driver, int attempt)
         {
@@ -66,7 +53,7 @@ namespace HAI_Selenium.Workflow.Classes
         private static void ExponentialBackoff(int attempt)
         {
             int delay = (int)Math.Pow(2, attempt) * 1000; // Exponential backoff time in milliseconds
-            Console.WriteLine($"Waiting for {delay} milliseconds before retrying...");
+            Log.Information("Waiting for {Delay} milliseconds before retrying...", delay);
             Thread.Sleep(delay); // Wait for the calculated delay
         }
 

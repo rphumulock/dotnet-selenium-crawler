@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Serilog;
 
 namespace HAI_Selenium.Utilities
 {
@@ -6,18 +7,18 @@ namespace HAI_Selenium.Utilities
     {
         internal static T LoadJsonFile<T>(string filePath)
         {
-            Console.WriteLine("[ACTION] Loading JSON file...");
+            Log.Information("[ACTION] Loading JSON file from {FilePath}...", filePath);
 
             try
             {
                 var json = File.ReadAllText(filePath);
                 var data = JsonConvert.DeserializeObject<T>(json);
-                Console.WriteLine("[SUCCESS] JSON file loaded and parsed.");
+                Log.Information("[SUCCESS] JSON file loaded and parsed successfully.");
                 return data;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Failed to load JSON file: {ex.Message}");
+                Log.Error(ex, "Failed to load JSON file: {Message}", ex.Message);
                 throw;
             }
         }
@@ -26,7 +27,8 @@ namespace HAI_Selenium.Utilities
         {
             if (!Directory.Exists(path))
             {
-                throw new DirectoryNotFoundException($"[ERROR] Directory not found: {path}");
+                Log.Error("Directory not found: {Path}", path);
+                throw new DirectoryNotFoundException($"Directory not found: {path}");
             }
         }
     }

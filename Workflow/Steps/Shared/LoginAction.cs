@@ -43,7 +43,7 @@ namespace HAI_Selenium.Workflow.Steps.Shared
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An error occurred during the login process: {ex.Message}");
+                Console.WriteLine($"An error occurred during the login process: {ex.Message}");
                 throw;
             }
         }

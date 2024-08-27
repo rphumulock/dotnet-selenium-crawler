@@ -1,5 +1,8 @@
 ﻿using OpenQA.Selenium;
 using HAI_Selenium.InternalClasses.StatusRequest;
+using Serilog;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace HAI_Selenium.Workflow.Steps.StatusRequest
 {
@@ -14,14 +17,14 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
 
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine($"[ACTION] Looking up claim...");
+            Log.Information("[ACTION] Looking up claim...");
 
             try
             {
                 IWebElement table = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("table[id*='exampleTable']")));
                 WaitForTableData(driver, table);
 
-                Console.WriteLine("[INFO] Claim line items grid loaded.");
+                Log.Information("Claim line items grid loaded.");
 
                 IWebElement tableBody = table.FindElement(By.CssSelector("tbody"));
                 IList<IWebElement> tableRows = tableBody.FindElements(By.TagName("tr"));
@@ -48,25 +51,24 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
 
                 Context.Set("ClaimLineItems", claimsDataLineItems);
 
-                Console.WriteLine("[INFO] Claim line items processed.");
+                Log.Information("[SUCCESS] Claim line items processed.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while processing service dates: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while processing claim line items: {Message}", ex.Message);
                 throw;
             }
         }
 
         public void WaitForTableData(IWebDriver driver, IWebElement table)
         {
-            WaitUntil(driver, driver =>
+            WaitUntil(driver, drv =>
             {
                 var cells = table.FindElements(By.CssSelector("tbody td > :first-child"));
                 return cells.Count > 0;
             });
 
-            Console.WriteLine("[INFO] Modal opened.");
+            Log.Information("Modal opened.");
         }
     }
 }
-

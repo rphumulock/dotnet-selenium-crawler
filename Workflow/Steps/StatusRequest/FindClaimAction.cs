@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using HAI_Selenium.InternalClasses.StatusRequest;
+using Serilog;
 
 namespace HAI_Selenium.Workflow.Steps.StatusRequest
 {
@@ -14,7 +15,7 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
 
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine($"[ACTION] Looking up claim #{ClaimStatusRequest.ClaimID}...");
+            Log.Information("[ACTION] Looking up claim #{ClaimID}...", ClaimStatusRequest.ClaimID);
 
             try
             {
@@ -24,16 +25,16 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
                 claimNumberInput.SendKeys(Keys.Delete);
                 claimNumberInput.SendKeys(ClaimStatusRequest.ClaimID);
 
-                Console.WriteLine("[INFO] Claim ID entered.");
+                Log.Information("Claim ID entered.");
 
                 IWebElement searchClaimsButton = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.Id("btnClmsSearch")));
                 searchClaimsButton.Click();
 
-                Console.WriteLine("[INFO] Search initiated for claim.");
+                Log.Information("[SUCCESS] Search initiated for claim.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while processing service dates: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while processing claim: {Message}", ex.Message);
                 throw;
             }
         }

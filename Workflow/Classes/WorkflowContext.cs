@@ -1,14 +1,13 @@
-﻿public class WorkflowContext
+﻿
+public class WorkflowContext
 {
     private readonly Dictionary<string, object> _contextData = new Dictionary<string, object>();
 
-    // Method to add data to the context
     public void Set<T>(string key, T value)
     {
         _contextData[key] = value;
     }
 
-    // Method to retrieve data from the context
     public T Get<T>(string key)
     {
         if (_contextData.TryGetValue(key, out var value))
@@ -18,7 +17,6 @@
         throw new KeyNotFoundException($"Key '{key}' not found in the context.");
     }
 
-    // Optional: Method to try and get a value without throwing
     public T GetOrDefault<T>(string key, T defaultValue = default)
     {
         if (_contextData.TryGetValue(key, out var value))

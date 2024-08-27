@@ -1,5 +1,5 @@
-﻿using HAI_Selenium.Utilities;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
+using Serilog;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
@@ -16,19 +16,18 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         {
             try
             {
-                Console.WriteLine("[ACTION] Adding Claim...");
+                Log.Information("[ACTION] Adding Claim...");
 
                 var addButton = Context.Get<IWebElement>("AddButtonElement");
                 WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(addButton));
                 addButton.Click();
 
-                Console.WriteLine("[INFO] Clicked 'Add' button.");
+                Log.Information("[SUCCESS] Clicked 'Add' button.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while processing form: {ex.Message}");
-
-                throw new RecoverableError("A non-recoverable error occurred.", ex);
+                Log.Error(ex, "An unexpected error occurred while processing form: {Message}", ex.Message);
+                throw;
             }
         }
     }

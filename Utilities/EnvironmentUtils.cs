@@ -1,14 +1,28 @@
 ﻿using dotenv.net;
+using Serilog;
+using System;
 
 namespace HAI_Selenium.Utilities
 {
     internal static class EnvironmentUtils
     {
+        internal static string DbConnectionStringBuilder()
+        {
+            string host = GetEnvironmentVariableOrThrow("DB_HOST");
+            string port = GetEnvironmentVariableOrThrow("DB_PORT");
+            string database = GetEnvironmentVariableOrThrow("DB_NAME");
+            string username = GetEnvironmentVariableOrThrow("DB_USER");
+            string password = GetEnvironmentVariableOrThrow("DB_PASSWORD");
+
+            var connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+            return connectionString;
+        }
+
         internal static void LoadEnvVariables()
         {
-            Console.WriteLine("[ACTION] Loading environment variables...");
+            Log.Information("[ACTION] Loading environment variables...");
             DotEnv.Load();
-            Console.WriteLine("[SUCCESS] Environment variables loaded.");
+            Log.Information("[SUCCESS] Environment variables loaded.");
         }
 
         internal static string GetChromeUserDataDir()
@@ -26,20 +40,21 @@ namespace HAI_Selenium.Utilities
             var value = Environment.GetEnvironmentVariable(key);
             if (string.IsNullOrEmpty(value))
             {
-                throw new InvalidOperationException($"[ERROR] Environment variable '{key}' is not set.");
+                Log.Error("Environment variable '{Key}' is not set.", key);
+                throw new InvalidOperationException($"Environment variable '{key}' is not set.");
             }
             return value;
         }
 
         internal static void LogCurrentUserInfo()
         {
-            Console.WriteLine("[ACTION] Logging current user info...");
+            Log.Information("[ACTION] Logging current user info...");
 
             var userName = GetEnvironmentVariableOrThrow("USERNAME");
             var userDomainName = Environment.UserDomainName;
-            Console.WriteLine($"[INFO] Current User: {userDomainName}\\{userName}");
+            Log.Information("[INFO] Current User: {UserDomainName}\\{UserName}", userDomainName, userName);
 
-            Console.WriteLine("[SUCCESS] User info logged.");
+            Log.Information("[SUCCESS] User info logged.");
         }
     }
 }

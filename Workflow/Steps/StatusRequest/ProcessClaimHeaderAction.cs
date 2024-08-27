@@ -1,5 +1,8 @@
 ﻿using OpenQA.Selenium;
 using HAI_Selenium.InternalClasses.StatusRequest;
+using Serilog;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace HAI_Selenium.Workflow.Steps.StatusRequest
 {
@@ -14,14 +17,14 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
 
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine($"[ACTION] Processing Claim...");
+            Log.Information("[ACTION] Processing Claim...");
 
             try
             {
                 IWebElement claimsGrid = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("claimsGrid")));
                 WaitForTableData(driver, claimsGrid);
 
-                Console.WriteLine("[INFO] Claims grid loaded.");
+                Log.Information("Claims grid loaded.");
 
                 IWebElement tbodyElement = claimsGrid.FindElement(By.CssSelector(":scope > tbody"));
                 IList<IWebElement> claimsTableRows = tbodyElement.FindElements(By.CssSelector(":scope > tr"));
@@ -46,31 +49,30 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
 
                 if (claimData == null)
                 {
-                    throw new Exception("[ERROR] No valid claim data found.");
+                    throw new Exception("No valid claim data found.");
                 }
 
                 Context.Set("ClaimContainer", claimData);
                 Context.Set("OpenClaimLineItemsElement", claimsTableRows[0]);
 
-                Console.WriteLine("[INFO] Claim header processed.");
+                Log.Information("[SUCCESS] Claim header processed.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while processing service dates: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while processing claim header: {Message}", ex.Message);
                 throw;
             }
         }
 
         public void WaitForTableData(IWebDriver driver, IWebElement table)
         {
-            WaitUntil(driver, driver =>
+            WaitUntil(driver, drv =>
             {
                 var cells = table.FindElements(By.CssSelector("tbody td > :first-child"));
                 return cells.Count > 0;
             });
 
-            Console.WriteLine("[INFO] Modal opened.");
+            Log.Information("Modal opened.");
         }
     }
 }
-

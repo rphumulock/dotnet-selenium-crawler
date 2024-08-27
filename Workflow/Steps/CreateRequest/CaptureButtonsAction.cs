@@ -1,5 +1,5 @@
-﻿using HAI_Selenium.Utilities;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
+using Serilog;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
@@ -16,20 +16,19 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         {
             try
             {
-                Console.WriteLine("[ACTION] Capturing Buttons...");
+                Log.Information("[ACTION] Capturing Buttons...");
 
                 var addButton = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button#tran1")));
                 var cancelButton = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button#tran3")));
                 Context.Set("AddButtonElement", addButton);
                 Context.Set("CancelButtonElement", cancelButton);
 
-                Console.WriteLine("[INFO] Captured 'Add' and 'Cancel' buttons.");
+                Log.Information("[SUCCESS] Captured 'Add' and 'Cancel' buttons.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while processing form: {ex.Message}");
-
-                throw new RecoverableError("A non-recoverable error occurred.", ex);
+                Log.Error(ex, "An unexpected error occurred while capturing buttons: {Message}", ex.Message);
+                throw;
             }
         }
     }

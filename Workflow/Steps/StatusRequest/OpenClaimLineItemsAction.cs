@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium;
+using Serilog;
 
 namespace HAI_Selenium.Workflow.Steps.StatusRequest
 {
@@ -15,17 +16,17 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
         {
             try
             {
-                Console.WriteLine("[ACTION] Expanding claim line items...");
+                Log.Information("[ACTION] Expanding claim line items...");
 
                 IWebElement openClaimLineItemsElement = Context.Get<IWebElement>("OpenClaimLineItemsElement");
                 IWebElement openLineItemsButton = openClaimLineItemsElement.FindElement(By.CssSelector("a[id*='claims-link']"));
                 openLineItemsButton.Click();
 
-                Console.WriteLine("[INFO] Claim line items expanded.");
+                Log.Information("[SUCCESS] Claim line items expanded.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while processing form: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while processing form: {Message}", ex.Message);
                 throw;
             }
         }

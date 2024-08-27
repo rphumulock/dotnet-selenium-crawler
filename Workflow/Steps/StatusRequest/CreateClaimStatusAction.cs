@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using HAI_Selenium.InternalClasses.StatusRequest;
+using Serilog;
 
 namespace HAI_Selenium.Workflow.Steps.StatusRequest
 {
@@ -14,7 +15,7 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
 
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine($"[ACTION] Creating Claim Status...");
+            Log.Information("[ACTION] Creating Claim Status...");
 
             try
             {
@@ -27,25 +28,24 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
 
                 Context.Set("ClaimStatuses", ClaimStatuses);
 
-                Console.WriteLine("[INFO] Claim Status created.");
+                Log.Information("[SUCCESS] Claim Status created successfully.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while creating Claim Status: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while creating Claim Status: {Message}", ex.Message);
                 throw;
             }
         }
 
         public void WaitForTableData(IWebDriver driver, IWebElement table)
         {
-            WaitUntil(driver, driver =>
+            WaitUntil(driver, drv =>
             {
                 var cells = table.FindElements(By.CssSelector("tbody td > :first-child"));
                 return cells.Count > 0;
             });
 
-            Console.WriteLine("[INFO] Modal opened.");
+            Log.Information("Modal opened and table data loaded.");
         }
     }
 }
-

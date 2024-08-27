@@ -1,34 +1,36 @@
 ﻿using OpenQA.Selenium;
+using Serilog;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class ProcessClaimFormFooterAction : WorkflowStepBase
     {
-
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine("[ACTION] Processing form service dates...");
+            Log.Information("[ACTION] Processing form service dates...");
 
             try
             {
                 IWebElement einNumberInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtFedTaxID")));
                 WaitUntil(driver, driver => !string.IsNullOrEmpty(einNumberInput.GetAttribute("value")));
-                Console.WriteLine("[INFO] Verified EIN number.");
+                Log.Information("Verified EIN number.");
 
                 IWebElement physPhoneInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPhysPhone")));
                 WaitUntil(driver, driver => !string.IsNullOrEmpty(physPhoneInput.GetAttribute("value")));
-                Console.WriteLine("[INFO] Verified physician's phone number.");
+                Log.Information("Verified physician's phone number.");
 
                 IWebElement physSignedDateInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtPhysicianSignedDate")));
                 WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.TextToBePresentInElementValue(physSignedDateInput, DateTime.Now.ToString("MM/dd/yyyy")));
-                Console.WriteLine("[INFO] Verified physician's signed date.");
+                Log.Information("Verified physician's signed date.");
+
+                Log.Information("[SUCCESS] Processing form service dates...");
+
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while processing service dates: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while processing service dates: {Message}", ex.Message);
                 throw;
             }
         }
     }
 }
-

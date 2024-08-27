@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using System.Globalization;
+using Serilog;
 using HAI_Selenium.InternalClasses.CreateRequest;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
@@ -15,7 +16,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine("[ACTION] Validating service dates month ...");
+            Log.Information("[ACTION] Validating service dates month ...");
 
             CreateClaimsRequest createClaimsRequest = Context.Get<CreateClaimsRequest>("CreateClaimsRequest");
 
@@ -23,7 +24,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             {
                 if (createClaimsRequest.ServiceDateRequests == null || createClaimsRequest.ServiceDateRequests.Count == 0)
                 {
-                    throw new ArgumentNullException("[ERROR] ServiceDateRequests cannot be null or empty.");
+                    throw new ArgumentNullException("ServiceDateRequests cannot be null or empty.");
                 }
 
                 string serviceMonth = null;
@@ -33,14 +34,14 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                     if (!DateTime.TryParseExact(serviceDateRequest.ServiceDate, new[] { "MM/dd/yyyy", "M/dd/yyyy", "MM/d/yyyy", "M/d/yyyy" },
                                                 null, DateTimeStyles.None, out DateTime parsedDate))
                     {
-                        throw new InvalidOperationException($"[ERROR] Invalid date format: {serviceDateRequest.ServiceDate}");
+                        throw new InvalidOperationException($"Invalid date format: {serviceDateRequest.ServiceDate}");
                     }
 
                     string currentMonth = parsedDate.Month.ToString("D2");
 
                     if (parsedDate.Date == currentDate)
                     {
-                        throw new InvalidOperationException($"[ERROR] Service date {serviceDateRequest.ServiceDate} cannot be today's date.");
+                        throw new InvalidOperationException($"Service date {serviceDateRequest.ServiceDate} cannot be today's date.");
                     }
 
                     if (serviceMonth == null)
@@ -49,18 +50,18 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                     }
                     else if (currentMonth != serviceMonth)
                     {
-                        throw new InvalidOperationException($"[ERROR] Mismatch found: expected month {serviceMonth}, but found {currentMonth}.");
+                        throw new InvalidOperationException($"Mismatch found: expected month {serviceMonth}, but found {currentMonth}.");
                     }
                 }
 
                 Context.Set("ServiceMonth", serviceMonth);
 
-                Console.WriteLine($"[SUCCESS] Invoice data loaded and service month validated: {serviceMonth}.");
+                Log.Information("[SUCCESS] Invoice data loaded and service month validated: {ServiceMonth}.", serviceMonth);
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while finding patient: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while validating service dates: {Message}", ex.Message);
                 throw;
             }
         }

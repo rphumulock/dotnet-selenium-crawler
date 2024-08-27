@@ -1,35 +1,50 @@
 ﻿using OpenQA.Selenium;
 using System.Net.Sockets;
+using HAI_Selenium.Data;
+using HAI_Selenium.Database.Models;
+using Serilog;
+using System;
 
 namespace HAI_Selenium.Utilities
 {
+    internal enum ErrorType
+    {
+        Recoverable,
+        NonRecoverable
+    }
+
+    internal class HAI_Error
+    {
+        public ErrorType Type { get; }
+        public Exception Exception { get; }
+
+        public HAI_Error(ErrorType type, Exception exception)
+        {
+            Type = type;
+            Exception = exception;
+        }
+
+        public override string ToString()
+        {
+            return $"RecoverableError: {Exception.Message} {(Exception.InnerException != null ? "-> " + Exception.InnerException.ToString() : string.Empty)}";
+        }
+    }
+
     internal static class ErrorHandlerUtils
     {
-        //public static void AnalyzeAndHandleFinalException(Exception ex)
-        //{
-        //    if (IsNetworkError(ex))
-        //    {
-        //        HandleNetworkError(ex);
-        //    }
-        //    else if (IsSeleniumError(ex))
-        //    {
-        //        HandleSeleniumError(ex);
-        //    }
-        //    else
-        //    {
-        //        HandleUnexpectedError(ex);
-        //    }
-        //}
-
         public static void AnalyzeAndHandleFinalException(Exception ex)
         {
-            if (ex is RecoverableError)
+            if (IsNetworkError(ex))
             {
-                HandleRecoverableError(ex);
+                HandleNetworkError(ex);
             }
-            else if (ex is NonRecoverableError)
+            else if (IsSeleniumError(ex))
             {
-                HandleNonRecoverableError(ex);
+                HandleSeleniumError(ex);
+            }
+            else
+            {
+                HandleUnexpectedError(ex);
             }
         }
 
@@ -52,72 +67,91 @@ namespace HAI_Selenium.Utilities
                    ex is UnhandledAlertException ||
                    ex is WebDriverException;
         }
-        private static void HandleRecoverableError(Exception ex)
-        {
-            Console.WriteLine($"[ERROR] Recoverable error: {ex.Message}");
-            // Additional handling for network errors, like retrying or notifying the user
-        }
-
-        private static void HandleNonRecoverableError(Exception ex)
-        {
-            Console.WriteLine($"[ERROR] Non-Recoverable error: {ex.Message}");
-            // Additional handling for network errors, like retrying or notifying the user
-        }
 
         private static void HandleNetworkError(Exception ex)
         {
-            Console.WriteLine($"[ERROR] Network-related error: {ex.Message}");
-            // Additional handling for network errors, like retrying or notifying the user
+            Log.Error(ex, "Network-related error: {Message}", ex.Message);
+            EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
         }
 
         private static void HandleSeleniumError(Exception ex)
         {
             if (ex is NoSuchElementException)
             {
-                Console.WriteLine($"[ERROR] NoSuchElementException: {ex.Message}");
-                // Additional handling for NoSuchElementException if needed
+                Log.Error(ex, "NoSuchElementException: {Message}", ex.Message);
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
             }
             else if (ex is InvalidSelectorException)
             {
-                Console.WriteLine($"[ERROR] InvalidSelectorException: {ex.Message}");
-                // Additional handling for InvalidSelectorException if needed
+                Log.Error(ex, "InvalidSelectorException: {Message}", ex.Message);
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
             }
             else if (ex is StaleElementReferenceException)
             {
-                Console.WriteLine($"[ERROR] StaleElementReferenceException: {ex.Message}");
-                // Additional handling for StaleElementReferenceException if needed
+                Log.Error(ex, "StaleElementReferenceException: {Message}", ex.Message);
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
             }
             else if (ex is ElementNotInteractableException)
             {
-                Console.WriteLine($"[ERROR] ElementNotInteractableException: {ex.Message}");
-                // Additional handling for ElementNotInteractableException if needed
+                Log.Error(ex, "ElementNotInteractableException: {Message}", ex.Message);
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
             }
             else if (ex is ElementClickInterceptedException)
             {
-                Console.WriteLine($"[ERROR] ElementClickInterceptedException: {ex.Message}");
-                // Additional handling for ElementClickInterceptedException if needed
+                Log.Error(ex, "ElementClickInterceptedException: {Message}", ex.Message);
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.NonRecoverable, ex));
             }
             else if (ex is UnhandledAlertException)
             {
-                Console.WriteLine($"[ERROR] UnhandledAlertException: {ex.Message}");
-                // Additional handling for UnhandledAlertException if needed
+                Log.Error(ex, "UnhandledAlertException: {Message}", ex.Message);
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.NonRecoverable, ex));
             }
             else if (ex is WebDriverException)
             {
-                Console.WriteLine($"[ERROR] WebDriverException: {ex.Message}");
-                // Additional handling for generic WebDriverException if needed
+                Log.Error(ex, "WebDriverException: {Message}", ex.Message);
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
             }
             else
             {
-                Console.WriteLine($"[ERROR] Unknown Selenium error: {ex.Message}");
+                Log.Error(ex, "Unknown Selenium error: {Message}", ex.Message);
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
             }
         }
 
         private static void HandleUnexpectedError(Exception ex)
         {
-            Console.WriteLine($"[ERROR] Unexpected exception: {ex.Message}");
-            Console.WriteLine($"[STACK TRACE] {ex.StackTrace}");
-            // Additional handling for unexpected exceptions
+            Log.Error(ex, "Unexpected error: {Message}", ex.Message);
+            EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
+        }
+
+        private static void EnterErrorIntoDatabase(HAI_Error error)
+        {
+            try
+            {
+                // Initialize the database context
+                using (var dbContext = new ApplicationDbContext())
+                {
+                    // Example: Add a new InvoiceRequest
+                    var newInvoiceRequest = new InvoiceRequest
+                    {
+                        // Set properties for your InvoiceRequest object
+                    };
+                    dbContext.InvoiceRequests.Add(newInvoiceRequest);
+                    dbContext.SaveChanges(); // Save changes to the database
+
+                    // Example: Query the InvoiceRequests table
+                    var invoiceRequests = dbContext.InvoiceRequests.ToList();
+                    foreach (var request in invoiceRequests)
+                    {
+                        Log.Information("InvoiceRequest ID: {Id}", request.Id);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error writing to Database: {Message}", ex.Message);
+                throw;
+            }
         }
     }
 }

@@ -27,12 +27,12 @@ namespace HAI_Selenium.Workflow.Steps.Shared
             }
             catch (WebDriverTimeoutException ex)
             {
-                Console.WriteLine($"[ERROR] Timeout while navigating to {DropdownName} -> {LinkName}: {ex.Message}");
+                Console.WriteLine($"Timeout while navigating to {DropdownName} -> {LinkName}: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while navigating to {DropdownName} -> {LinkName}: {ex.Message}");
+                Console.WriteLine($"An unexpected error occurred while navigating to {DropdownName} -> {LinkName}: {ex.Message}");
                 throw;
             }
         }

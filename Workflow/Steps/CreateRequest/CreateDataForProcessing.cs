@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium;
+using Serilog;
 using HAI_Selenium.InternalClasses.CreateRequest;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
@@ -14,7 +15,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine("[ACTION] Creating FormData for Processing...");
+            Log.Information("[ACTION] Creating FormData for Processing...");
 
             try
             {
@@ -50,24 +51,22 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                     Units = "1"
                 });
 
-
                 ClaimHeaderFormData formHeaderData = new ClaimHeaderFormData
                 {
                     AuthorizationNumber = authNumberServiceRequest.SRAuth,
                     PolicyNumber = createClaimsRequest.PolicyNumber,
                     DiagnosisCodes = createClaimsRequest.DiagnosisCodes.Select(code => code.Replace(".", "")).ToList(),
-
                 };
                 List<List<ClaimServiceDateFormData>> batchedServiceDateFormData = BatchServiceDateFormData(serviceDateFormDataList);
 
                 Context.Set("FormHeaderData", formHeaderData);
                 Context.Set("BatchedServiceDates", batchedServiceDateFormData);
 
-                Console.WriteLine("[SUCCESS] FormData for Processing created and stored in context.");
+                Log.Information("[SUCCESS] FormData for Processing created and stored in context.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while creating FormData for Processing: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while creating FormData for Processing: {Message}", ex.Message);
                 throw;
             }
         }
@@ -92,7 +91,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
         private static string CalculatePayDate(IncedoServiceRequest authNumberServiceRequest, ServiceDateRequests serviceDateRequest)
         {
-            Console.WriteLine("[ACTION] Calculating pay date...");
+            Log.Information("[ACTION] Calculating pay date...");
 
             var authNumberServiceRequestParts = authNumberServiceRequest.StartDate.Split('/');
             var serviceDateRequestParts = serviceDateRequest.ServiceDate.Split('/');
@@ -100,6 +99,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             if (!int.TryParse(authNumberServiceRequestParts[1], out int authNumberServiceRequestDay) ||
                 !int.TryParse(serviceDateRequestParts[1], out int serviceDateRequestDay))
             {
+                Log.Error("Invalid date format in service date or service request start date.");
                 throw new ArgumentException("Invalid date format in service date or service request start date.");
             }
 
@@ -123,11 +123,13 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         {
             if (!int.TryParse(monthString, out int month) || month < 1 || month > 12)
             {
+                Log.Error("Invalid month format.");
                 throw new ArgumentException("Invalid month format.");
             }
 
             if (!int.TryParse(yearString, out int year))
             {
+                Log.Error("Invalid year format.");
                 throw new ArgumentException("Invalid year format.");
             }
 

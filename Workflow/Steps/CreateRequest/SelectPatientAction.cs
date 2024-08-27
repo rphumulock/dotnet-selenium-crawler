@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium;
+using Serilog;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
@@ -6,26 +7,20 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
     {
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine("[ACTION] Selecting patient...");
+            Log.Information("[ACTION] Selecting patient...");
 
             try
             {
                 IWebElement patientGrid = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("patientGrid")));
                 patientGrid.Click();
 
-                Console.WriteLine("[INFO] Patient selected successfully.");
-            }
-            catch (WebDriverTimeoutException ex)
-            {
-                Console.WriteLine($"[ERROR] Timeout while selecting patient: {ex.Message}");
-                throw;
+                Log.Information("[SUCCESS] Patient selected successfully.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while selecting patient: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while selecting patient: {Message}", ex.Message);
                 throw;
             }
         }
     }
 }
-

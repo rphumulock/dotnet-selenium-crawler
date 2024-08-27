@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium;
+using Serilog;
 using HAI_Selenium.Utilities;
 using HAI_Selenium.InternalClasses.CreateRequest;
 
@@ -15,23 +16,23 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine("[ACTION] Selecting Service Request Authorization Number...");
+            Log.Information("[ACTION] Selecting Service Request Authorization Number...");
 
             try
             {
                 IWebElement servicesGrid = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("servicesGrid")));
-                Console.WriteLine("[INFO] Services grid found and loaded.");
+                Log.Information("Services grid found and loaded.");
 
                 WaitUntil(driver, drv =>
                 {
                     var cells = servicesGrid.FindElements(By.CssSelector("tbody td > :first-child"));
                     return cells.Count > 0;
                 });
-                Console.WriteLine("[INFO] Services grid cells loaded successfully.");
+                Log.Information("Services grid cells loaded successfully.");
 
                 // Extract service request entries
                 var trElements = servicesGrid.FindElements(By.CssSelector("tbody tr:not(:first-child)"));
-                Console.WriteLine($"[INFO] Found {trElements.Count} service request entries.");
+                Log.Information("Found {ServiceRequestCount} service request entries.", trElements.Count);
 
                 List<IncedoServiceRequest> serviceRequests = new List<IncedoServiceRequest>();
 
@@ -77,17 +78,18 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                     }
                 }
 
-                Console.WriteLine($"[INFO] Extracted {serviceRequests.Count} service requests from the grid.");
+                Log.Information("Extracted {ServiceRequestCount} service requests from the grid.", serviceRequests.Count);
 
                 // Filter out only the "Approved" service requests
                 var approvedRequests = serviceRequests.Where(request => request.AuthStatus == "Approved").ToList();
-                Console.WriteLine($"[INFO] Found {approvedRequests.Count} approved service requests.");
+                Log.Information("Found {ApprovedServiceRequestCount} approved service requests.", approvedRequests.Count);
 
                 // Further filter by the ServiceMonth
+                var serviceMonth = Context.Get<string>("ServiceMonth");
                 var filteredRequests = approvedRequests
-                    .Where(request => request.StartDate.Split('/')[0] == DateUtils.RemoveLeadingZero(Context.Get<string>("ServiceMonth")))
+                    .Where(request => request.StartDate.Split('/')[0] == DateUtils.RemoveLeadingZero(serviceMonth))
                     .ToList();
-                Console.WriteLine($"[INFO] Found {filteredRequests.Count} service requests matching month: {Context.Get<string>("ServiceMonth")}.");
+                Log.Information("Found {FilteredServiceRequestCount} service requests matching month: {ServiceMonth}.", filteredRequests.Count, serviceMonth);
 
                 // Find the request with the latest day
                 var latestRequest = filteredRequests
@@ -96,11 +98,11 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
                 if (latestRequest != null)
                 {
-                    Console.WriteLine($"[SUCCESS] Latest approved service request found: {latestRequest.ToString()}");
+                    Log.Information("[SUCCESS] Latest approved service request found: {LatestRequest}.", latestRequest.ToString());
                 }
                 else
                 {
-                    Console.WriteLine($"[WARN] No approved service requests found for month: {Context.Get<string>("ServiceMonth")}");
+                    Log.Warning("[WARN] No approved service requests found for month: {ServiceMonth}.", serviceMonth);
                 }
 
                 // Store the service request in the context for later use
@@ -108,7 +110,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] An unexpected error occurred while selecting service request: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred while selecting service request: {Message}", ex.Message);
                 throw;
             }
         }

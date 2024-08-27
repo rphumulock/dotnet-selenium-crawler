@@ -18,7 +18,7 @@ namespace HAI_Selenium.Workflow.Steps.Shared
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Failed to navigate to site: {ex.Message}");
+                Console.WriteLine($"Failed to navigate to site: {ex.Message}");
                 throw;
             }
         }
