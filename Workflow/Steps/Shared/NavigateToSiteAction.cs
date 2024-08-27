@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium;
+using Serilog;
 using HAI_Selenium.Utilities;
 
 namespace HAI_Selenium.Workflow.Steps.Shared
@@ -7,18 +8,18 @@ namespace HAI_Selenium.Workflow.Steps.Shared
     {
         protected override void PerformStep(IWebDriver driver)
         {
-            Console.WriteLine("[ACTION] Navigating to Site...");
+            Log.Information("[ACTION] Navigating to Site...");
 
             try
             {
                 string url = EnvironmentUtils.GetEnvironmentVariableOrThrow("URL");
                 driver.Navigate().GoToUrl(url);
 
-                Console.WriteLine($"[SUCCESS] Navigated to {url}");
+                Log.Information("[SUCCESS] Navigated to {Url}", url);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to navigate to site: {ex.Message}");
+                Log.Error(ex, "Failed to navigate to site: {Message}", ex.Message);
                 throw;
             }
         }

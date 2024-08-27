@@ -3,6 +3,7 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
+using Serilog;
 
 namespace HAI_Selenium.Utilities
 {
@@ -10,14 +11,14 @@ namespace HAI_Selenium.Utilities
     {
         internal static IWebDriver SetupDriver()
         {
-            Console.WriteLine("[ACTION] Setting up WebDriver...");
+            Log.Information("[ACTION] Setting up WebDriver...");
 
             new DriverManager().SetUpDriver(new ChromeConfig());
             var options = SetupChromeOptions();
             var driver = new ChromeDriver(options);
             driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
 
-            Console.WriteLine("[SUCCESS] WebDriver setup complete.");
+            Log.Information("[SUCCESS] WebDriver setup complete.");
             return driver;
         }
 
@@ -34,7 +35,7 @@ namespace HAI_Selenium.Utilities
             options.AddArgument("--disable-extensions");
             options.AddArgument("--enable-features=NewUsbBackend");
 
-            Console.WriteLine("[INFO] Chrome options configured.");
+            Log.Information("[INFO] Chrome options configured.");
             return options;
         }
 
@@ -46,5 +47,4 @@ namespace HAI_Selenium.Utilities
             }
         }
     }
-
 }
