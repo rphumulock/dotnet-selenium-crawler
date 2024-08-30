@@ -1,65 +1,52 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Serilog;
+using HAI_Selenium.Workflow.Classes;
 using HAI_Selenium.InternalClasses.CreateRequest;
+using HAI_Selenium.Database.Models;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
-    internal class FindPatientAction : WorkflowStepBase
+    internal class FindPatientAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected WorkflowContext Context { get; init; }
-
-        internal FindPatientAction(WorkflowContext context)
-        {
-            Context = context;
-        }
-
         protected override void PerformStep(IWebDriver driver)
         {
-            try
+
+            InvoiceRequest createClaimsRequest = Context.Get<InvoiceRequest>("InvoiceRequest");
+
+            Log.Information("[ACTION] Initiating patient lookup for {FirstName} {LastName}...", createClaimsRequest.FirstName, createClaimsRequest.LastName);
+
+            var policyNumber = createClaimsRequest.PolicyNumber;
+            if (!string.IsNullOrEmpty(policyNumber))
             {
-                CreateClaimsRequest createClaimsRequest = Context.Get<CreateClaimsRequest>("CreateClaimsRequest");
-
-                Log.Information("[ACTION] Initiating patient lookup for {FirstName} {LastName}...", createClaimsRequest.FirstName, createClaimsRequest.LastName);
-
-                var policyNumber = createClaimsRequest.PolicyNumber;
-                if (!string.IsNullOrEmpty(policyNumber))
+                LogInputAction(driver, "txtPolicy", policyNumber, "[INFO] Policy number added.");
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(createClaimsRequest.FirstName))
                 {
-                    LogInputAction(driver, "txtPolicy", policyNumber, "[INFO] Policy number added.");
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(createClaimsRequest.FirstName))
-                    {
-                        LogInputAction(driver, "txtFirst", createClaimsRequest.FirstName, "[INFO] First name added.");
-                    }
-
-                    if (!string.IsNullOrEmpty(createClaimsRequest.LastName))
-                    {
-                        LogInputAction(driver, "txtLast", createClaimsRequest.LastName, "[INFO] Last name added.");
-                    }
-
-                    if (!string.IsNullOrEmpty(createClaimsRequest.DateOfBirth))
-                    {
-                        LogInputAction(driver, "txtDOB", createClaimsRequest.DateOfBirth, "[INFO] Birthdate added.", clickAfterInputSelector: "button.ui-datepicker-close[data-handler='hide'][data-event='click']");
-                    }
-
-                    if (!string.IsNullOrEmpty(createClaimsRequest.Gender))
-                    {
-                        SelectGender(driver, "ddGender", createClaimsRequest.Gender);
-                    }
+                    LogInputAction(driver, "txtFirst", createClaimsRequest.FirstName, "[INFO] First name added.");
                 }
 
-                ClickSearchButton(driver);
+                if (!string.IsNullOrEmpty(createClaimsRequest.LastName))
+                {
+                    LogInputAction(driver, "txtLast", createClaimsRequest.LastName, "[INFO] Last name added.");
+                }
 
-                Log.Information("[SUCCESS] Looking up patient {FirstName} {LastName}...", createClaimsRequest.FirstName, createClaimsRequest.LastName);
+                if (!string.IsNullOrEmpty(createClaimsRequest.DateOfBirth))
+                {
+                    LogInputAction(driver, "txtDOB", createClaimsRequest.DateOfBirth, "[INFO] Birthdate added.", clickAfterInputSelector: "button.ui-datepicker-close[data-handler='hide'][data-event='click']");
+                }
 
+                if (!string.IsNullOrEmpty(createClaimsRequest.Gender))
+                {
+                    SelectGender(driver, "ddGender", createClaimsRequest.Gender);
+                }
             }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "An unexpected error occurred while finding patient: {Message}", ex.Message);
-                throw;
-            }
+
+            ClickSearchButton(driver);
+
+            Log.Information("[SUCCESS] Looking up patient {FirstName} {LastName}...", createClaimsRequest.FirstName, createClaimsRequest.LastName);
         }
 
         private void LogInputAction(IWebDriver driver, string elementId, string inputValue, string successMessage, string clickAfterInputSelector = null)

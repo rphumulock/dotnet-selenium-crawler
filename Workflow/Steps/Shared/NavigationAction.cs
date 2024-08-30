@@ -1,10 +1,16 @@
 ﻿using OpenQA.Selenium;
 using Serilog;
+using HAI_Selenium.Workflow.Classes;
 
 namespace HAI_Selenium.Workflow.Steps.Shared
 {
     internal abstract class NavigationAction : WorkflowStepBase
     {
+        internal NavigationAction(WorkflowContext context) : base(context)
+        {
+            Context = context;
+        }
+
         protected abstract string DropdownSelector { get; }
 
         protected abstract string LinkSelector { get; }
@@ -33,7 +39,6 @@ namespace HAI_Selenium.Workflow.Steps.Shared
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "An unexpected error occurred while navigating to {DropdownName} -> {LinkName}: {Message}", DropdownName, LinkName, ex.Message);
                 throw;
             }
         }

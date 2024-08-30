@@ -9,7 +9,7 @@ namespace HAI_Selenium.Workflow.Classes
     {
         private const int MaxRetries = 3;
 
-        public static void ExecuteWithRetry(IWorkflowStrategy workflow, IWebDriver driver)
+        public static async Task ExecuteWithRetryAsync(IWorkflowStrategy workflow, IWebDriver driver)
         {
             for (int attempt = 1; attempt <= MaxRetries; attempt++)
             {
@@ -17,49 +17,49 @@ namespace HAI_Selenium.Workflow.Classes
                 {
                     Log.Information("Starting workflow attempt {Attempt}", attempt);
 
-                    // Execute the workflow process
-                    workflow.Execute(driver);
+                    await workflow.ExecuteAsync(driver);
 
                     Log.Information("Workflow completed successfully.");
-                    return; // Exit if successful
+                    return; 
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Attempt {Attempt} failed with exception.", attempt);
+                    Log.Error("Attempt {Attempt} failed with exception.", attempt);
+
 
                     if (attempt == MaxRetries)
                     {
                         Log.Error("Max retry attempts reached. Analyzing exception...");
-                        driver?.Quit(); // Close the driver
-                        ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex); // Use the ErrorHandler class
+
+                        ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex);
+                        driver?.Quit();
+                        driver?.Close();
                     }
                     else
                     {
-                        // Retry logic
                         HandleRetry(ref driver, attempt);
                     }
-
                 }
             }
         }
 
         private static void HandleRetry(ref IWebDriver driver, int attempt)
         {
-            driver?.Quit(); // Close the driver
-            ExponentialBackoff(attempt); // Exponential backoff before retrying
-            RestartDriver(ref driver); // Restart the driver for the next attempt
+            driver?.Quit(); 
+            ExponentialBackoff(attempt);
+            RestartDriver(ref driver);
         }
 
         private static void ExponentialBackoff(int attempt)
         {
-            int delay = (int)Math.Pow(2, attempt) * 1000; // Exponential backoff time in milliseconds
+            int delay = (int)Math.Pow(2, attempt) * 1000;
             Log.Information("Waiting for {Delay} milliseconds before retrying...", delay);
-            Thread.Sleep(delay); // Wait for the calculated delay
+            Thread.Sleep(delay);
         }
 
         private static void RestartDriver(ref IWebDriver driver)
         {
-            driver = WebDriverUtils.SetupDriver(); // Restart the driver for the next attempt
+            driver = WebDriverUtils.SetupDriver();
         }
     }
 }

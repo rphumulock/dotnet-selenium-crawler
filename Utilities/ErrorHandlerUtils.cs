@@ -4,15 +4,17 @@ using HAI_Selenium.Data;
 using HAI_Selenium.Database.Models;
 using Serilog;
 using System;
+using HAI_Selenium.Workflow.Steps.CreateRequest;
+using HAI_Selenium.Exceptions;
+using System.Linq;
+using HAI_Selenium.InternalClasses.CreateRequest;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+
 
 namespace HAI_Selenium.Utilities
 {
-    internal enum ErrorType
-    {
-        Recoverable,
-        NonRecoverable
-    }
-
+    // Correct single definition of HAI_Error class
     internal class HAI_Error
     {
         public ErrorType Type { get; }
@@ -26,8 +28,15 @@ namespace HAI_Selenium.Utilities
 
         public override string ToString()
         {
-            return $"RecoverableError: {Exception.Message} {(Exception.InnerException != null ? "-> " + Exception.InnerException.ToString() : string.Empty)}";
+            return $"RecoverableError: {Exception.Message} {(Exception.InnerException != null ? "-> " + Exception.InnerException : string.Empty)}";
         }
+    }
+
+    // Define ErrorType Enum
+    internal enum ErrorType
+    {
+        Recoverable,
+        NonRecoverable
     }
 
     internal static class ErrorHandlerUtils
@@ -76,82 +85,89 @@ namespace HAI_Selenium.Utilities
 
         private static void HandleSeleniumError(Exception ex)
         {
-            if (ex is NoSuchElementException)
+            var errorType = ErrorType.Recoverable; // Default to recoverable
+            var errorMessage = ex switch
             {
-                Log.Error(ex, "NoSuchElementException: {Message}", ex.Message);
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
-            }
-            else if (ex is InvalidSelectorException)
+                NoSuchElementException => "NoSuchElementException",
+                InvalidSelectorException => "InvalidSelectorException",
+                StaleElementReferenceException => "StaleElementReferenceException",
+                ElementNotInteractableException => "ElementNotInteractableException",
+                //ElementClickInterceptedException => "ElementClickInterceptedException",
+                UnhandledAlertException => "UnhandledAlertException",
+                _ => "Unknown Selenium error"
+            };
+
+            if (ex is ElementClickInterceptedException || ex is UnhandledAlertException)
             {
-                Log.Error(ex, "InvalidSelectorException: {Message}", ex.Message);
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
+                errorType = ErrorType.NonRecoverable; // Mark specific errors as non-recoverable
             }
-            else if (ex is StaleElementReferenceException)
-            {
-                Log.Error(ex, "StaleElementReferenceException: {Message}", ex.Message);
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
-            }
-            else if (ex is ElementNotInteractableException)
-            {
-                Log.Error(ex, "ElementNotInteractableException: {Message}", ex.Message);
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
-            }
-            else if (ex is ElementClickInterceptedException)
-            {
-                Log.Error(ex, "ElementClickInterceptedException: {Message}", ex.Message);
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.NonRecoverable, ex));
-            }
-            else if (ex is UnhandledAlertException)
-            {
-                Log.Error(ex, "UnhandledAlertException: {Message}", ex.Message);
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.NonRecoverable, ex));
-            }
-            else if (ex is WebDriverException)
-            {
-                Log.Error(ex, "WebDriverException: {Message}", ex.Message);
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
-            }
-            else
-            {
-                Log.Error(ex, "Unknown Selenium error: {Message}", ex.Message);
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
-            }
+
+            Log.Error(ex, $"{errorMessage}: {{Message}}", ex.Message);
+            EnterErrorIntoDatabase(new HAI_Error(errorType, ex));
         }
 
         private static void HandleUnexpectedError(Exception ex)
         {
             Log.Error(ex, "Unexpected error: {Message}", ex.Message);
-            EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
+
+            if (ex is HAIException haiException)
+            {
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, haiException));
+            }
+            else
+            {
+                throw ex; // Properly rethrow the original exception
+            }
         }
 
         private static void EnterErrorIntoDatabase(HAI_Error error)
         {
             try
             {
-                // Initialize the database context
+                Log.Information("Executing workflow step for error handling");
+
                 using (var dbContext = new ApplicationDbContext())
                 {
-                    // Example: Add a new InvoiceRequest
-                    var newInvoiceRequest = new InvoiceRequest
+                    if (error.Exception is HAIException haiException)
                     {
-                        // Set properties for your InvoiceRequest object
-                    };
-                    dbContext.InvoiceRequests.Add(newInvoiceRequest);
-                    dbContext.SaveChanges(); // Save changes to the database
+                        var contextData = haiException.Context;
+                        InvoiceRequest createClaimsRequest = contextData.Get<InvoiceRequest>("InvoiceRequest");
 
-                    // Example: Query the InvoiceRequests table
-                    var invoiceRequests = dbContext.InvoiceRequests.ToList();
-                    foreach (var request in invoiceRequests)
-                    {
-                        Log.Information("InvoiceRequest ID: {Id}", request.Id);
+                        // Retrieve current batch and remaining batches from context
+                        ICollection<ServiceDateRequest> currentBatch = contextData.Get<ICollection<ServiceDateRequest>>("CurrentBatchServiceDateRequests");
+                        ICollection<ICollection<ServiceDateRequest>> remainingBatches = contextData.Get<ICollection<ICollection<ServiceDateRequest>>>("RemainingBatchesServiceDateRequests");
+                        ICollection<ServiceDateRequest> allServiceDateRequests = new List<ServiceDateRequest>();
+                        allServiceDateRequests = currentBatch.ToList();
+                        foreach (var batch in remainingBatches)
+                        {
+                            allServiceDateRequests = allServiceDateRequests.Concat(batch).ToList();
+                        }
+
+                        // Create a new InvoiceRequest with the flattened list
+                        var newInvoiceRequest = new InvoiceRequest
+                        {
+                            Id = createClaimsRequest.Id,
+                            InvoiceId = createClaimsRequest.InvoiceId,
+                            FirstName = createClaimsRequest.FirstName,
+                            LastName = createClaimsRequest.LastName,
+                            PolicyNumber = createClaimsRequest.PolicyNumber,
+                            DiagnosisCodes = createClaimsRequest.DiagnosisCodes,
+                            DateOfBirth = createClaimsRequest.DateOfBirth,
+                            Gender = createClaimsRequest.Gender,
+                            ServiceDateRequests = allServiceDateRequests
+                        };
+
+                        dbContext.InvoiceRequests.Add(newInvoiceRequest);
+                        dbContext.SaveChanges();
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception dbEx)
             {
-                Log.Error(ex, "Error writing to Database: {Message}", ex.Message);
+                Log.Error(dbEx, "Error writing to Database: {Message}", dbEx.Message);
                 throw;
             }
+
         }
     }
 }

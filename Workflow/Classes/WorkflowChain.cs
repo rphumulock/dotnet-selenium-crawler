@@ -1,29 +1,32 @@
 ﻿using OpenQA.Selenium;
 using Serilog;
 
-public class WorkflowChain
+namespace HAI_Selenium.Workflow.Classes
 {
-    private readonly List<IWorkflowStep> _steps = new List<IWorkflowStep>();
-
-    public WorkflowChain AddStep(IWorkflowStep step)
+    public class WorkflowChain
     {
-        _steps.Add(step);
-        return this;
-    }
+        private readonly List<IWorkflowStep> _steps = new List<IWorkflowStep>();
 
-    public void Execute(IWebDriver driver)
-    {
-        foreach (var step in _steps)
+        public WorkflowChain AddStep(IWorkflowStep step)
         {
-            try
+            _steps.Add(step);
+            return this;
+        }
+
+        public void Execute(IWebDriver driver)
+        {
+            foreach (var step in _steps)
             {
-                Log.Information("Executing workflow step: {StepName}", step.GetType().Name);
-                step.Execute(driver);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Exception occurred during step execution: {StepName}", step.GetType().Name);
-                throw;
+                try
+                {
+                    Log.Information("Executing workflow step: {StepName}", step.GetType().Name);
+                    step.Execute(driver);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("Exception occurred during step execution: {StepName}", step.GetType().Name);
+                    throw;
+                }
             }
         }
     }

@@ -1,7 +1,4 @@
-﻿using System;
-using OpenQA.Selenium;
-using Medallion.Threading.Postgres;
-using Npgsql;
+﻿using OpenQA.Selenium;
 using Serilog;
 using HAI_Selenium.Utilities;
 using HAI_Selenium.Workflow.Classes;
@@ -10,7 +7,7 @@ namespace HAI_Selenium
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             // Configure Serilog
             Log.Logger = new LoggerConfiguration()
@@ -31,25 +28,13 @@ namespace HAI_Selenium
             // Log application start
             Log.Information("Application starting...");
 
-            IDisposable handle = null; // Declare the lock handle outside try-catch
-
-            // Create a connection to PostgreSQL
-            using (var connection = new NpgsqlConnection(connectionString))
+            // Initialize the DatabaseLockManager
+            using (var lockManager = new DatabaseLockManager(connectionString, clientId))
             {
-                connection.Open();
-                Log.Information("Connected to PostgreSQL database.");
-
-                // Set up the PostgreSQL distributed lock
-                var lockId = new PostgresAdvisoryLockKey(clientId.GetHashCode());
-                var dbLock = new PostgresDistributedLock(lockId, connection);
-
                 try
                 {
-                    Log.Information("Attempting to acquire lock for client ID: {ClientId}", clientId);
-
-                    // Acquire the lock and assign to the handle
-                    handle = dbLock.Acquire();
-                    Log.Information("Lock acquired for client ID: {ClientId}", clientId);
+                    // Acquire the lock
+                    lockManager.AcquireLock();
 
                     // Get the action from the environment and create workflow
                     string action = EnvironmentUtils.GetEnvironmentVariableOrThrow("ACTION");
@@ -59,7 +44,7 @@ namespace HAI_Selenium
                     // Setup WebDriver and execute the workflow with retry logic
                     driver = WebDriverUtils.SetupDriver();
                     Log.Information("WebDriver setup completed.");
-                    WorkflowExecutor.ExecuteWithRetry(workflow, driver);
+                    await WorkflowExecutor.ExecuteWithRetryAsync(workflow, driver); // Use the async method
                     Log.Information("Workflow executed successfully.");
                 }
                 catch (Exception ex)
@@ -68,16 +53,9 @@ namespace HAI_Selenium
                 }
                 finally
                 {
-                    // Release the lock if it was acquired
-                    handle?.Dispose();
-                    Log.Information("Lock released for client ID: {ClientId}", clientId);
-
                     // Cleanup WebDriver
-                    if (driver != null)
-                    {
-                        driver.Quit();
-                        Log.Information("WebDriver closed and quit.");
-                    }
+                    driver?.Quit();
+                    Log.Information("WebDriver closed and quit.");
 
                     Log.Information("Application ending.");
                 }
@@ -86,5 +64,6 @@ namespace HAI_Selenium
             // Ensure to flush and close the log when the application exits
             Log.CloseAndFlush();
         }
+
     }
 }

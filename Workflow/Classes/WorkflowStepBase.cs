@@ -1,46 +1,57 @@
-﻿using OpenQA.Selenium;
+﻿using HAI_Selenium.Exceptions;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Serilog;
 
-public abstract class WorkflowStepBase : IWorkflowStep
+namespace HAI_Selenium.Workflow.Classes
 {
-    protected int MaxRetries { get; } = 3;
-    private const int DefaultWaitTimeInSeconds = 3;
-
-    public void Execute(IWebDriver driver)
+    public abstract class WorkflowStepBase : IWorkflowStep
     {
-        int attempts = 0;
-        while (attempts < MaxRetries)
-        {
-            try
-            {
-                PerformStep(driver);
-                return;
-            }
-            catch (Exception ex)
-            {
-                attempts++;
-                Log.Error(ex, "Attempt {Attempt} failed with exception.", attempts);
+        protected int MaxRetries { get; } = 3;
+        private const int DefaultWaitTimeInSeconds = 3;
 
-                if (attempts >= MaxRetries)
+        protected WorkflowContext Context { get; init; }
+
+        protected WorkflowStepBase(WorkflowContext context)
+        {
+            Context = context;
+        }
+
+        public void Execute(IWebDriver driver)
+        {
+            int attempts = 0;
+            while (attempts < MaxRetries)
+            {
+                try
                 {
-                    Log.Error("Max retry attempts reached. Halting workflow.");
-                    throw;
+                    PerformStep(driver);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    attempts++;
+                    Log.Error("Attempt {Attempt} failed with exception.", attempts);
+
+                    if (attempts >= MaxRetries)
+                    {
+                        Log.Error("Max retry attempts reached. Halting workflow.");
+                        throw new HAIException(ex.Message, Context, ex);
+                    }
                 }
             }
         }
-    }
 
-    protected WebDriverWait GetWebDriverWait(IWebDriver driver, int waitTimeInSeconds = DefaultWaitTimeInSeconds)
-    {
-        return new WebDriverWait(driver, TimeSpan.FromSeconds(waitTimeInSeconds));
-    }
+        protected WebDriverWait GetWebDriverWait(IWebDriver driver, int waitTimeInSeconds = DefaultWaitTimeInSeconds)
+        {
+            return new WebDriverWait(driver, TimeSpan.FromSeconds(waitTimeInSeconds));
+        }
 
-    protected T WaitUntil<T>(IWebDriver driver, Func<IWebDriver, T> condition, int waitTimeInSeconds = DefaultWaitTimeInSeconds)
-    {
-        var wait = GetWebDriverWait(driver, waitTimeInSeconds);
-        return wait.Until(condition);
-    }
+        protected T WaitUntil<T>(IWebDriver driver, Func<IWebDriver, T> condition, int waitTimeInSeconds = DefaultWaitTimeInSeconds)
+        {
+            var wait = GetWebDriverWait(driver, waitTimeInSeconds);
+            return wait.Until(condition);
+        }
 
-    protected abstract void PerformStep(IWebDriver driver);
+        protected abstract void PerformStep(IWebDriver driver);
+    }
 }

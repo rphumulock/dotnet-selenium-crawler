@@ -2,6 +2,7 @@
   "FirstName": "Demar",
   "LastName": "Sweets",
   "PolicyNumber": "30798539801",
+  "InvoiceID":  "123",
   //"DiagnosisCodes": [ "234.2", "1F1241.1" ],
   "DiagnosisCodes": [ "F33.2", "F41.1" ],
   "DateOfBirth": "05/02/2004",

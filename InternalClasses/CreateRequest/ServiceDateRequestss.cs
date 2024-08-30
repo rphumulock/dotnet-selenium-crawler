@@ -5,7 +5,7 @@ namespace HAI_Selenium.InternalClasses.CreateRequest
     /// <summary>
     /// Incoming Request data for Service Dates.
     /// </summary>
-    internal class ServiceDateRequests
+    internal class ServiceDateRequestss
     {
         public required string ServiceDate { get; set; }
         public required string Counselor { get; set; }

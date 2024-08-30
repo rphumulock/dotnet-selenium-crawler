@@ -1,12 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using HAI_Selenium.Database.Models; // Ensure this is the correct namespace
+using HAI_Selenium.Database.Models;
 using HAI_Selenium.Utilities;
 
 namespace HAI_Selenium.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public DbSet<InvoiceRequest> InvoiceRequests { get; set; } // Ensure this DbSet exists
+        public DbSet<InvoiceRequest> InvoiceRequests { get; set; }  // Updated to PascalCase
+        public DbSet<ServiceDateRequest> ServiceDateRequests { get; set; }  // Updated to PascalCase
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -23,18 +24,14 @@ namespace HAI_Selenium.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Configure the one-to-many relationship
             modelBuilder.Entity<InvoiceRequest>()
-                .HasKey(ir => ir.Id); // Set primary key
+                .HasMany(ir => ir.ServiceDateRequests)
+                .WithOne(sd => sd.InvoiceRequest)
+                .HasForeignKey(sd => sd.InvoiceRequestId)
+                .OnDelete(DeleteBehavior.Cascade); // Optional: Set delete behavior
 
-            modelBuilder.Entity<InvoiceRequest>()
-                .Property(ir => ir.Id)
-                .ValueGeneratedOnAdd(); // Auto-increment primary key
-        }
-
-        protected static void ApplyMigrations(ApplicationDbContext dbContext)
-        {
-            Console.WriteLine("Applying any pending migrations...");
-            dbContext.Database.Migrate(); // Apply any pending migrations
+            base.OnModelCreating(modelBuilder);  // Ensure base method is called after configurations
         }
     }
 }

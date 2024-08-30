@@ -1,17 +1,15 @@
 ﻿using OpenQA.Selenium;
-using HAI_Selenium.InternalClasses.StatusRequest;
 using Serilog;
+using HAI_Selenium.InternalClasses.StatusRequest;
+using HAI_Selenium.Workflow.Classes;
+
 
 namespace HAI_Selenium.Workflow.Steps.StatusRequest
 {
     internal class CreateClaimStatusAction : WorkflowStepBase
     {
-        protected WorkflowContext Context { get; init; }
 
-        internal CreateClaimStatusAction(WorkflowContext context)
-        {
-            Context = context;
-        }
+        internal CreateClaimStatusAction(WorkflowContext context) : base(context) { }
 
         protected override void PerformStep(IWebDriver driver)
         {
@@ -32,7 +30,6 @@ namespace HAI_Selenium.Workflow.Steps.StatusRequest
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "An unexpected error occurred while creating Claim Status: {Message}", ex.Message);
                 throw;
             }
         }

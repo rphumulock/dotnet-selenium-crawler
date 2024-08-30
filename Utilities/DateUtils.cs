@@ -1,11 +1,11 @@
 ﻿using System.Globalization;
-using HAI_Selenium.InternalClasses.CreateRequest;
+using HAI_Selenium.Database.Models;
 
 namespace HAI_Selenium.Utilities
 {
     internal static class DateUtils
     {
-        internal static ServiceDateRequests FindLatestServiceDate(List<ServiceDateRequests> serviceDateRequests)
+        internal static ServiceDateRequest FindLatestServiceDate(ICollection<ServiceDateRequest> serviceDateRequests)
         {
             string[] formats = { "MM/dd/yyyy", "M/dd/yyyy", "MM/d/yyyy", "M/d/yyyy" };
 

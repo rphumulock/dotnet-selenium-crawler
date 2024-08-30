@@ -2,11 +2,19 @@
 using HAI_Selenium.Utilities;
 using Serilog;
 using SeleniumExtras.WaitHelpers;
+using HAI_Selenium.Workflow.Classes;
+
 
 namespace HAI_Selenium.Workflow.Steps.Shared
 {
     public class LoginAction : WorkflowStepBase
     {
+
+        internal LoginAction(WorkflowContext context) : base(context)
+        {
+            Context = context;
+        }
+
         protected override void PerformStep(IWebDriver driver)
         {
             Log.Information("[ACTION] Logging into the site...");
@@ -45,7 +53,6 @@ namespace HAI_Selenium.Workflow.Steps.Shared
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "An error occurred during the login process: {Message}", ex.Message);
                 throw;
             }
         }

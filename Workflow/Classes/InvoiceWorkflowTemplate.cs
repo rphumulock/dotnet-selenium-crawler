@@ -1,15 +1,17 @@
 ﻿using OpenQA.Selenium;
 using HAI_Selenium.Workflow.Interfaces;
 
-namespace HAI_Selenium.Workflow.AbstractClasses
+namespace HAI_Selenium.Workflow.Classes
 {
     public abstract class InvoiceWorkflowTemplate : IWorkflowStrategy
     {
-        public void Execute(IWebDriver driver)
+        public async Task ExecuteAsync(IWebDriver driver)
         {
-            ProcessData(driver);
+            await LoadDataAsync(driver); // Ensures LoadDataAsync completes before ProcessData starts
+            await ProcessDataAsync(driver); // Process data after loading is complete
         }
 
-        protected abstract void ProcessData(IWebDriver driver);
+        protected abstract Task LoadDataAsync(IWebDriver driver);
+        protected abstract Task ProcessDataAsync(IWebDriver driver);
     }
 }

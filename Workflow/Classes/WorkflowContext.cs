@@ -1,28 +1,30 @@
-﻿
-public class WorkflowContext
+﻿namespace HAI_Selenium.Workflow.Classes
 {
-    private readonly Dictionary<string, object> _contextData = new Dictionary<string, object>();
-
-    public void Set<T>(string key, T value)
+    public class WorkflowContext
     {
-        _contextData[key] = value;
-    }
+        private readonly Dictionary<string, object> _contextData = new Dictionary<string, object>();
 
-    public T Get<T>(string key)
-    {
-        if (_contextData.TryGetValue(key, out var value))
+        public void Set<T>(string key, T value)
         {
-            return (T)value;
+            _contextData[key] = value;
         }
-        throw new KeyNotFoundException($"Key '{key}' not found in the context.");
-    }
 
-    public T GetOrDefault<T>(string key, T defaultValue = default)
-    {
-        if (_contextData.TryGetValue(key, out var value))
+        public T Get<T>(string key)
         {
-            return (T)value;
+            if (_contextData.TryGetValue(key, out var value))
+            {
+                return (T)value;
+            }
+            throw new KeyNotFoundException($"Key '{key}' not found in the context.");
         }
-        return defaultValue;
+
+        public T GetOrDefault<T>(string key, T defaultValue = default)
+        {
+            if (_contextData.TryGetValue(key, out var value))
+            {
+                return (T)value;
+            }
+            return defaultValue;
+        }
     }
 }
