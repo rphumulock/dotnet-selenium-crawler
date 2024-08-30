@@ -3,6 +3,7 @@ using System.Globalization;
 using Serilog;
 using HAI_Selenium.Workflow.Classes;
 using HAI_Selenium.Database.Models;
+using HAI_Selenium.InternalClasses.CreateRequest;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
@@ -13,17 +14,17 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         {
             Log.Information("[ACTION] Validating service dates month ...");
 
-            InvoiceRequest createClaimsRequest = Context.Get<InvoiceRequest>("InvoiceRequest");
+            InvoiceRequest mockRequest = Context.Get<InvoiceRequest>("MockRequest");
             ICollection<ServiceDateRequest> serviceDateRequests = Context.Get<ICollection<ServiceDateRequest>>("ServiceDateRequests");
 
-            if (createClaimsRequest.ServiceDateRequests == null || createClaimsRequest.ServiceDateRequests.Count == 0)
+            if (serviceDateRequests == null || serviceDateRequests.Count == 0)
             {
                 throw new ArgumentNullException("ServiceDateRequests cannot be null or empty.");
             }
 
             string serviceMonth = null;
             DateTime currentDate = DateTime.Today;
-            foreach (var serviceDateRequest in createClaimsRequest.ServiceDateRequests)
+            foreach (var serviceDateRequest in serviceDateRequests)
             {
                 if (!DateTime.TryParseExact(serviceDateRequest.ServiceDate, new[] { "MM/dd/yyyy", "M/dd/yyyy", "MM/d/yyyy", "M/d/yyyy" },
                                             null, DateTimeStyles.None, out DateTime parsedDate))
@@ -49,8 +50,6 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             }
 
             Context.Set("ServiceMonth", serviceMonth);
-            Context.Set("ServiceDateRequestsCount", createClaimsRequest.ServiceDateRequests.Count);
-            Context.Set("TreatmentType", createClaimsRequest.ServiceDateRequests.ElementAt(0).TreatmentType);
 
             Log.Information("[SUCCESS] Invoice data loaded and service month validated: {ServiceMonth}.", serviceMonth);
 

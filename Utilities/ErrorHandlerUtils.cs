@@ -3,8 +3,8 @@ using System.Net.Sockets;
 using HAI_Selenium.Database.Models;
 using Serilog;
 using HAI_Selenium.Exceptions;
-using Microsoft.EntityFrameworkCore;
 using HAI_Selenium.Services;
+using HAI_Selenium.InternalClasses.CreateRequest;
 
 namespace HAI_Selenium.Utilities
 {
@@ -33,19 +33,19 @@ namespace HAI_Selenium.Utilities
 
     internal static class ErrorHandlerUtils
     {
-        public static void AnalyzeAndHandleFinalException(Exception ex, IInvoiceRequestService invoiceRequestService)
+        public static async Task AnalyzeAndHandleFinalExceptionAsync(Exception ex, IInvoiceRequestService invoiceRequestService)
         {
             if (IsNetworkError(ex))
             {
-                HandleNetworkError(ex, invoiceRequestService);
+                await HandleNetworkErrorAsync(ex, invoiceRequestService);
             }
             else if (IsSeleniumError(ex))
             {
-                HandleSeleniumError(ex, invoiceRequestService);
+                await HandleSeleniumErrorAsync(ex, invoiceRequestService);
             }
             else
             {
-                HandleUnexpectedError(ex, invoiceRequestService);
+                await HandleUnexpectedErrorAsync(ex, invoiceRequestService);
             }
         }
 
@@ -69,13 +69,13 @@ namespace HAI_Selenium.Utilities
                    ex is WebDriverException;
         }
 
-        private static void HandleNetworkError(Exception ex, IInvoiceRequestService invoiceRequestService)
+        private static async Task HandleNetworkErrorAsync(Exception ex, IInvoiceRequestService invoiceRequestService)
         {
             Log.Error(ex, "Network-related error: {Message}", ex.Message);
-            EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex), invoiceRequestService);
+            await EnterErrorIntoDatabaseAsync(new HAI_Error(ErrorType.Recoverable, ex), invoiceRequestService);
         }
 
-        private static void HandleSeleniumError(Exception ex, IInvoiceRequestService invoiceRequestService)
+        private static async Task HandleSeleniumErrorAsync(Exception ex, IInvoiceRequestService invoiceRequestService)
         {
             var errorType = ex is ElementClickInterceptedException || ex is UnhandledAlertException
                 ? ErrorType.NonRecoverable
@@ -91,24 +91,24 @@ namespace HAI_Selenium.Utilities
             };
 
             Log.Error(ex, $"{errorMessage}: {{Message}}", ex.Message);
-            EnterErrorIntoDatabase(new HAI_Error(errorType, ex), invoiceRequestService);
+            await EnterErrorIntoDatabaseAsync(new HAI_Error(errorType, ex), invoiceRequestService);
         }
 
-        private static void HandleUnexpectedError(Exception ex, IInvoiceRequestService invoiceRequestService)
+        private static async Task HandleUnexpectedErrorAsync(Exception ex, IInvoiceRequestService invoiceRequestService)
         {
             Log.Error(ex, "Unexpected error: {Message}", ex.Message);
 
             if (ex is HAIException haiException)
             {
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, haiException), invoiceRequestService);
+                await EnterErrorIntoDatabaseAsync(new HAI_Error(ErrorType.Recoverable, haiException), invoiceRequestService);
             }
             else
             {
-                Log.Error(ex, "Unexpected erro FIX MEEEE IN ERROR HANDLER: {Message}", ex.Message);
+                Log.Error(ex, "Unexpected error: {Message}", ex.Message);
             }
         }
 
-        private static void EnterErrorIntoDatabase(HAI_Error error, IInvoiceRequestService invoiceRequestService)
+        private static async Task EnterErrorIntoDatabaseAsync(HAI_Error error, IInvoiceRequestService invoiceRequestService)
         {
             try
             {
@@ -117,32 +117,35 @@ namespace HAI_Selenium.Utilities
                 if (error.Exception is HAIException haiException)
                 {
                     var contextData = haiException.Context;
-                    InvoiceRequest createClaimsRequest = contextData.Get<InvoiceRequest>("InvoiceRequest");
+                    var mockRequest = contextData.Get<InvoiceRequest>("MockRequest");
 
                     var currentBatch = contextData.Get<ICollection<ServiceDateRequest>>("CurrentBatchServiceDateRequests");
                     var remainingBatches = contextData.Get<ICollection<ICollection<ServiceDateRequest>>>("RemainingBatchesServiceDateRequests");
 
+                    // Combine all batches into one list
                     var allServiceDateRequests = currentBatch.ToList();
                     foreach (var batch in remainingBatches)
                     {
-                        allServiceDateRequests = allServiceDateRequests.Concat(batch).ToList();
+                        allServiceDateRequests.AddRange(batch);
                     }
 
-                    var newInvoiceRequest = new InvoiceRequest
-                    {
-                        Id = createClaimsRequest.Id,
-                        InvoiceId = createClaimsRequest.InvoiceId,
-                        FirstName = createClaimsRequest.FirstName,
-                        LastName = createClaimsRequest.LastName,
-                        PolicyNumber = createClaimsRequest.PolicyNumber,
-                        DiagnosisCodes = createClaimsRequest.DiagnosisCodes,
-                        DateOfBirth = createClaimsRequest.DateOfBirth,
-                        Gender = createClaimsRequest.Gender,
-                        ServiceDateRequests = allServiceDateRequests
-                    };
+                    // Fetch existing ServiceDateRequests from the database
+                    var existingServiceDateRequests = await invoiceRequestService.GetServiceDateRequestsByInvoiceIdAsync(int.Parse(mockRequest.InvoiceId));
 
-                    // Use the service to handle database operations
-                    invoiceRequestService.AddInvoiceRequest(newInvoiceRequest);
+                    // Determine which ServiceDateRequests need to be deleted
+                    var serviceDateRequestsToDelete = existingServiceDateRequests
+                        .Where(existing => !allServiceDateRequests.Any(newRequest =>
+                            DateTime.Parse(newRequest.ServiceDate) == DateTime.Parse(existing.ServiceDate)))
+                        .ToList();
+
+                    // Delete the ServiceDateRequests that do not exist in allServiceDateRequests
+                    if (serviceDateRequestsToDelete.Any())
+                    {
+                        await invoiceRequestService.DeleteServiceDateRequestsByIdsAsync(serviceDateRequestsToDelete.Select(sdr => sdr.Id));
+                    }
+
+                    // Prepare to save the ServiceDateRequests that exist in allServiceDateRequests
+                    await invoiceRequestService.SaveServiceDateRequestsAsync(allServiceDateRequests);
                 }
             }
             catch (Exception dbEx)

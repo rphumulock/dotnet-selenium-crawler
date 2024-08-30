@@ -3,38 +3,56 @@ using HAI_Selenium.Workflow.Classes;
 using OpenQA.Selenium;
 using Serilog;
 using HAI_Selenium.Services;
+using HAI_Selenium.InternalClasses.CreateRequest;
 
 namespace HAI_Selenium.Workflow.Steps
 {
-    public class SetupInvoiceData : WorkflowStepBase
+    public class SetupInvoiceData(WorkflowContext context, IInvoiceRequestService invoiceRequestService) : WorkflowStepBase(context)
     {
-        private readonly IInvoiceRequestService _invoiceRequestService;
-
-        public SetupInvoiceData(WorkflowContext context, IInvoiceRequestService invoiceRequestService)
-            : base(context)
-        {
-            _invoiceRequestService = invoiceRequestService;
-        }
-
         protected override async Task PerformStepAsync(IWebDriver driver)
         {
+            Log.Information("[ACTION] Setting up Invoice Data...");
+
             InvoiceRequest mockRequest = Context.Get<InvoiceRequest>("MockRequest");
 
-            // Check for the invoice in the database
-            var failedInvoiceRequest = await _invoiceRequestService.GetInvoiceRequestByIdAsync(mockRequest.InvoiceId);
-            if (failedInvoiceRequest != null)
+            ICollection<ServiceDateRequest> failedServiceDates = await invoiceRequestService.GetServiceDateRequestsByInvoiceIdAsync(int.Parse(mockRequest.InvoiceId));
+
+            if (failedServiceDates.Count > 0)
             {
-                Log.Information("Item with ID {ItemId} exists in the database.", failedInvoiceRequest.InvoiceId);
-                Context.Set("LoadFromDB", true);
-                Context.Set("InvoiceRequest", failedInvoiceRequest);
-                Context.Set("ServiceDateRequests", failedInvoiceRequest.ServiceDateRequests);
+                Log.Information("Item with ID {ItemId} exists in the database.", mockRequest.InvoiceId);
+                Context.Set("ServiceDateRequests", failedServiceDates);
             }
             else
             {
                 Log.Warning("Item with ID {ItemId} does not exist in the database.", mockRequest.InvoiceId);
-                Context.Set("LoadFromDB", false);
-                Context.Set("ServiceDateRequests", mockRequest.ServiceDateRequests);
+
+                // Create a new ICollection<ServiceDateRequest> from mockRequest.ServiceDateRequests
+                ICollection<ServiceDateRequest> serviceDateRequests = new List<ServiceDateRequest>();
+
+                foreach (var sdr in mockRequest.ServiceDateRequests)
+                {
+                    serviceDateRequests.Add(new ServiceDateRequest
+                    {
+                        Id = sdr.Id,
+                        InvoiceRequestId = int.Parse(mockRequest.InvoiceId), // Assuming InvoiceId is a string and needs parsing
+                        ServiceDate = sdr.ServiceDate,
+                        Counselor = sdr.Counselor,
+                        StartTime = sdr.StartTime,
+                        EndTime = sdr.EndTime,
+                        Other = sdr.Other,
+                        TreatmentType = sdr.TreatmentType
+                    });
+                }
+
+                // Set the newly created ServiceDateRequests in the context
+                Context.Set("ServiceDateRequests", serviceDateRequests);
             }
+            Context.Set("ServiceDateRequestsCount", mockRequest.ServiceDateRequests.Count);
+            Context.Set("TreatmentType", mockRequest.ServiceDateRequests.ElementAt(0).TreatmentType);
+
+            Log.Information("[SUCCESS] Setup Invoice Data.");
+
+            return;
         }
     }
 }

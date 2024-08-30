@@ -3,7 +3,6 @@ using OpenQA.Selenium.Support.UI;
 using Serilog;
 using HAI_Selenium.Workflow.Classes;
 using HAI_Selenium.InternalClasses.CreateRequest;
-using HAI_Selenium.Database.Models;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
@@ -12,41 +11,41 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         protected override Task PerformStepAsync(IWebDriver driver)
         {
 
-            InvoiceRequest createClaimsRequest = Context.Get<InvoiceRequest>("InvoiceRequest");
+            InvoiceRequest mockRequest = Context.Get<InvoiceRequest>("MockRequest");
 
-            Log.Information("[ACTION] Initiating patient lookup for {FirstName} {LastName}...", createClaimsRequest.FirstName, createClaimsRequest.LastName);
+            Log.Information("[ACTION] Initiating patient lookup for {FirstName} {LastName}...", mockRequest.FirstName, mockRequest.LastName);
 
-            var policyNumber = createClaimsRequest.PolicyNumber;
+            var policyNumber = mockRequest.PolicyNumber;
             if (!string.IsNullOrEmpty(policyNumber))
             {
                 LogInputAction(driver, "txtPolicy", policyNumber, "[INFO] Policy number added.");
             }
             else
             {
-                if (!string.IsNullOrEmpty(createClaimsRequest.FirstName))
+                if (!string.IsNullOrEmpty(mockRequest.FirstName))
                 {
-                    LogInputAction(driver, "txtFirst", createClaimsRequest.FirstName, "[INFO] First name added.");
+                    LogInputAction(driver, "txtFirst", mockRequest.FirstName, "[INFO] First name added.");
                 }
 
-                if (!string.IsNullOrEmpty(createClaimsRequest.LastName))
+                if (!string.IsNullOrEmpty(mockRequest.LastName))
                 {
-                    LogInputAction(driver, "txtLast", createClaimsRequest.LastName, "[INFO] Last name added.");
+                    LogInputAction(driver, "txtLast", mockRequest.LastName, "[INFO] Last name added.");
                 }
 
-                if (!string.IsNullOrEmpty(createClaimsRequest.DateOfBirth))
+                if (!string.IsNullOrEmpty(mockRequest.DateOfBirth))
                 {
-                    LogInputAction(driver, "txtDOB", createClaimsRequest.DateOfBirth, "[INFO] Birthdate added.", clickAfterInputSelector: "button.ui-datepicker-close[data-handler='hide'][data-event='click']");
+                    LogInputAction(driver, "txtDOB", mockRequest.DateOfBirth, "[INFO] Birthdate added.", clickAfterInputSelector: "button.ui-datepicker-close[data-handler='hide'][data-event='click']");
                 }
 
-                if (!string.IsNullOrEmpty(createClaimsRequest.Gender))
+                if (!string.IsNullOrEmpty(mockRequest.Gender))
                 {
-                    SelectGender(driver, "ddGender", createClaimsRequest.Gender);
+                    SelectGender(driver, "ddGender", mockRequest.Gender);
                 }
             }
 
             ClickSearchButton(driver);
 
-            Log.Information("[SUCCESS] Looking up patient {FirstName} {LastName}...", createClaimsRequest.FirstName, createClaimsRequest.LastName);
+            Log.Information("[SUCCESS] Looking up patient {FirstName} {LastName}...", mockRequest.FirstName, mockRequest.LastName);
 
             return Task.CompletedTask;
         }

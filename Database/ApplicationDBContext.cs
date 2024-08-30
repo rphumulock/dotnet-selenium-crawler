@@ -6,7 +6,6 @@ namespace HAI_Selenium.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public DbSet<InvoiceRequest> InvoiceRequests { get; set; }
         public DbSet<ServiceDateRequest> ServiceDateRequests { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
@@ -22,6 +21,7 @@ namespace HAI_Selenium.Data
                 string password = EnvironmentUtils.GetEnvironmentVariableOrThrow("DB_PASSWORD");
 
                 var connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+                optionsBuilder.EnableSensitiveDataLogging();
                 optionsBuilder.UseNpgsql(connectionString);
             }
         }
@@ -29,13 +29,6 @@ namespace HAI_Selenium.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // Configure the one-to-many relationship
-            modelBuilder.Entity<InvoiceRequest>()
-                .HasMany(ir => ir.ServiceDateRequests)
-                .WithOne(sd => sd.InvoiceRequest)
-                .HasForeignKey(sd => sd.InvoiceRequestId)
-                .OnDelete(DeleteBehavior.Cascade); // Optional: Set delete behavior
         }
     }
 }

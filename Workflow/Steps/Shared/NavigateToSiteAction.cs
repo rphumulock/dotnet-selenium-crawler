@@ -15,19 +15,12 @@ namespace HAI_Selenium.Workflow.Steps.Shared
         {
             Log.Information("[ACTION] Navigating to Site...");
 
-            try
-            {
-                string url = EnvironmentUtils.GetEnvironmentVariableOrThrow("URL");
-                driver.Navigate().GoToUrl(url);
+            string url = EnvironmentUtils.GetEnvironmentVariableOrThrow("URL");
+            driver.Navigate().GoToUrl(url);
 
-                Log.Information("[SUCCESS] Navigated to {Url}", url);
+            Log.Information("[SUCCESS] Navigated to {Url}", url);
 
-                return Task.CompletedTask;
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
+            return Task.CompletedTask;
         }
     }
 

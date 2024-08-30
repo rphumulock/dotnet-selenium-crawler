@@ -10,7 +10,6 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         {
             Log.Information("[ACTION] Selecting patient...");
 
-
             IWebElement patientGrid = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("patientGrid")));
             patientGrid.Click();
 

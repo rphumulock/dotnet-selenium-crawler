@@ -1,12 +1,13 @@
-﻿using HAI_Selenium.Data;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
-using HAI_Selenium.Utilities;
 using OpenQA.Selenium;
 using HAI_Selenium.Workflow.Classes;
 using HAI_Selenium.Services;
-using HAI_Selenium.Database.Models;
+using HAI_Selenium.Data;
+using HAI_Selenium.Utilities;
+using HAI_Selenium.InternalClasses.CreateRequest;
 
 namespace HAI_Selenium
 {
@@ -100,15 +101,18 @@ namespace HAI_Selenium
 
         static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .UseSerilog() // Integrate Serilog with Microsoft.Extensions.Logging
+                .UseSerilog()
                 .ConfigureServices((context, services) =>
                 {
-                    //var connectionString = EnvironmentUtils.DbConnectionStringBuilder();
+                    var connectionString = EnvironmentUtils.DbConnectionStringBuilder();
                     // Register DbContext with connection string
-                    //services.AddDbContext<ApplicationDbContext>(options =>
-                    //    options.UseNpgsql(connectionString));
+                    services.AddDbContext<ApplicationDbContext>(options =>
+                    {
+                        options.EnableSensitiveDataLogging();
+                        options.UseNpgsql(connectionString);
+                    });
 
-                    services.AddDbContext<ApplicationDbContext>();
+                    //services.AddDbContext<ApplicationDbContext>();
 
                     // Register application services
                     services.AddScoped<IInvoiceRequestService, InvoiceRequestService>();

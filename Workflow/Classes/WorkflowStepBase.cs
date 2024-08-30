@@ -5,17 +5,12 @@ using Serilog;
 
 namespace HAI_Selenium.Workflow.Classes
 {
-    public abstract class WorkflowStepBase : IWorkflowStep
+    public abstract class WorkflowStepBase(WorkflowContext context) : IWorkflowStep
     {
         protected int MaxRetries { get; } = 3;
         private const int DefaultWaitTimeInSeconds = 3;
 
-        protected WorkflowContext Context { get; init; }
-
-        protected WorkflowStepBase(WorkflowContext context)
-        {
-            Context = context;
-        }
+        protected WorkflowContext Context { get; init; } = context;
 
         public async Task ExecuteAsync(IWebDriver driver)
         {

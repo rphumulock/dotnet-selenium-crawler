@@ -2,7 +2,6 @@
 using Serilog;
 using HAI_Selenium.InternalClasses.CreateRequest;
 using HAI_Selenium.Workflow.Classes;
-using HAI_Selenium.Database.Models;
 
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
@@ -13,13 +12,13 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         {
             Log.Information("[ACTION] Creating FormData for Processing...");
 
-            InvoiceRequest InvoiceRequest = Context.Get<InvoiceRequest>("InvoiceRequest");
+            InvoiceRequest mockRequest = Context.Get<InvoiceRequest>("MockRequest");
             IncedoServiceRequest LatestServiceRequest = Context.Get<IncedoServiceRequest>("LatestServiceRequest");
             ClaimHeaderFormData formHeaderData = new()
             {
                 AuthorizationNumber = LatestServiceRequest.SRAuth,
-                PolicyNumber = InvoiceRequest.PolicyNumber,
-                DiagnosisCodes = InvoiceRequest.DiagnosisCodes.Select(code => code.Replace(".", "")).ToList(),
+                PolicyNumber = mockRequest.PolicyNumber,
+                DiagnosisCodes = mockRequest.DiagnosisCodes.Select(code => code.Replace(".", "")).ToList(),
             };
 
             Context.Set("FormHeaderData", formHeaderData);

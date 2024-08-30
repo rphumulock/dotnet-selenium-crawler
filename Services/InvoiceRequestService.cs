@@ -4,36 +4,50 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HAI_Selenium.Services
 {
-    public class InvoiceRequestService : IInvoiceRequestService
+    public class InvoiceRequestService(ApplicationDbContext dbContext) : IInvoiceRequestService
     {
-        private readonly ApplicationDbContext _context;
-
-        public InvoiceRequestService(ApplicationDbContext context)
+        public async Task<List<ServiceDateRequest>> GetServiceDateRequestsByInvoiceIdAsync(int invoiceRequestId)
         {
-            _context = context;
+            return await dbContext.ServiceDateRequests
+                .Where(sdr => sdr.InvoiceRequestId == invoiceRequestId)
+                .ToListAsync();
         }
 
-        public async Task DeleteInvoiceIfExistsAsync(int invoiceId)
+        public async Task DeleteServiceDateRequestsByIdsAsync(IEnumerable<int> serviceDateRequestIds)
         {
-            var invoiceRequest = await _context.InvoiceRequests.FindAsync(invoiceId);
-            if (invoiceRequest != null)
+            var serviceDateRequestsToDelete = await dbContext.ServiceDateRequests
+                .Where(sdr => serviceDateRequestIds.Contains(sdr.Id))
+                .ToListAsync();
+
+            dbContext.ServiceDateRequests.RemoveRange(serviceDateRequestsToDelete);
+            await dbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteServiceDateRequestsByInvoiceIdAsync(int invoiceRequestId)
+        {
+            var serviceDateRequestsToDelete = await dbContext.ServiceDateRequests
+                .Where(sdr => sdr.InvoiceRequestId == invoiceRequestId)
+                .ToListAsync();
+
+            dbContext.ServiceDateRequests.RemoveRange(serviceDateRequestsToDelete);
+            await dbContext.SaveChangesAsync();
+        }
+
+        public async Task SaveServiceDateRequestsAsync(IEnumerable<ServiceDateRequest> serviceDateRequests)
+        {
+            foreach (var serviceDateRequest in serviceDateRequests)
             {
-                _context.InvoiceRequests.Remove(invoiceRequest);
-                await _context.SaveChangesAsync();
+                if (serviceDateRequest.Id == 0)
+                {
+                    dbContext.ServiceDateRequests.Add(serviceDateRequest);
+                }
+                else
+                {
+                    dbContext.ServiceDateRequests.Update(serviceDateRequest);
+                }
             }
-        }
 
-        public async Task<InvoiceRequest> GetInvoiceRequestByIdAsync(int invoiceId)
-        {
-            return await _context.InvoiceRequests
-                .Include(ir => ir.ServiceDateRequests)
-                .SingleOrDefaultAsync(ir => ir.InvoiceId == invoiceId);
-        }
-
-        public async Task AddInvoiceRequest(InvoiceRequest invoiceRequest)
-        {
-            _context.InvoiceRequests.Add(invoiceRequest);
-            await _context.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
     }
 }

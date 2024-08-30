@@ -4,8 +4,13 @@ namespace HAI_Selenium.Services
 {
     public interface IInvoiceRequestService
     {
-        Task DeleteInvoiceIfExistsAsync(int invoiceId);
-        Task<InvoiceRequest> GetInvoiceRequestByIdAsync(int invoiceId);
-        Task AddInvoiceRequest(InvoiceRequest invoiceRequest);
+
+        Task<List<ServiceDateRequest>> GetServiceDateRequestsByInvoiceIdAsync(int invoiceRequestId);
+
+        Task DeleteServiceDateRequestsByIdsAsync(IEnumerable<int> serviceDateRequestIds);
+
+        Task DeleteServiceDateRequestsByInvoiceIdAsync(int invoiceRequestId);
+
+        Task SaveServiceDateRequestsAsync(IEnumerable<ServiceDateRequest> serviceDateRequests);
     }
 }

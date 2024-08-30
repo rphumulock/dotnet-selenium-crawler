@@ -16,14 +16,14 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         {
             Log.Information("[ACTION] Creating FormData for Processing...");
 
-            InvoiceRequest createClaimsRequest = Context.Get<InvoiceRequest>("InvoiceRequest");
-            ICollection<ServiceDateRequest> serviceDateRequests = createClaimsRequest.ServiceDateRequests;
+            InvoiceRequest mockRequest = Context.Get<InvoiceRequest>("MockRequest");
+            ICollection<ServiceDateRequest> serviceDateRequests = Context.Get<ICollection<ServiceDateRequest>>("ServiceDateRequests");
             List<ClaimServiceDateFormData> serviceDateFormDataList = serviceDateRequests.Select(serviceDateRequest => new ClaimServiceDateFormData
             {
                 StartDate = serviceDateRequest.ServiceDate,
                 PlaceOfService = "15",
                 CPT = "H2016",
-                DiagnosisPointer = GetDiagnosisPointer(createClaimsRequest.DiagnosisCodes.Count),
+                DiagnosisPointer = GetDiagnosisPointer(mockRequest.DiagnosisCodes.Count),
                 ChargesDollars = "1.",
                 ChargesCents = "00",
                 Units = "1"

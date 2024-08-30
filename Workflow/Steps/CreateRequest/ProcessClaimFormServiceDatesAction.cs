@@ -5,7 +5,7 @@ using HAI_Selenium.Workflow.Classes;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
-    internal class ProcessFormServiceDatesAction(WorkflowContext context) : WorkflowStepBase(context)
+    internal class ProcessFormServiceDatesAction(WorkflowContext context, int num) : WorkflowStepBase(context)
     {
         protected override Task PerformStepAsync(IWebDriver driver)
         {
@@ -18,12 +18,21 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             {
                 int index = indexedItem.index + 1;
 
+                Log.Information("Entered CPT code for entry #{Index} of batch.", indexedItem.serviceDate.CPT);
+
                 IWebElement dateInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDateOfServStart" + index)));
                 ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", dateInput);
                 dateInput.Click();
                 dateInput.SendKeys(Keys.Control + "a");
                 dateInput.SendKeys(Keys.Delete);
-                dateInput.SendKeys(indexedItem.serviceDate.StartDate);
+                if (num == 1)
+                {
+                    dateInput.SendKeys("sadsdf");
+                }
+                else
+                {
+                    dateInput.SendKeys(indexedItem.serviceDate.StartDate);
+                }
                 Log.Information("Entered service date for entry #{Index} of batch.", index);
 
                 IWebElement dateInputDoneButton = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button.ui-datepicker-close[data-handler='hide'][data-event='click']")));
@@ -73,7 +82,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                 daysUnitsInput.SendKeys(indexedItem.serviceDate.Units);
                 Log.Information("Entered days/units for entry #{Index} of batch.", index);
             }
-            
+
             Log.Information("[SUCCESS] Processing form service dates.");
 
             return Task.CompletedTask;

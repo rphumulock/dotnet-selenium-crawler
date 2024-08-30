@@ -12,14 +12,13 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
         {
             Log.Information("[ACTION] Creating FormData for Processing...");
 
-            InvoiceRequest InvoiceRequest = Context.Get<InvoiceRequest>("InvoiceRequest");
-            int serviceDatesCount = Context.Get<int>("ServiceDatesCount");
-            string treatmentType = Context.Get<string>("TreatmentType");
-
+            InvoiceRequest mockRequest = Context.Get<InvoiceRequest>("MockRequest");
+            ICollection<ServiceDateRequest> serviceDateRequests = Context.Get<ICollection<ServiceDateRequest>>("ServiceDateRequests");
             IncedoServiceRequest LatestServiceRequest = Context.Get<IncedoServiceRequest>("LatestServiceRequest");
             List<List<ClaimServiceDateFormData>> BatchServiceDateFormData = Context.Get<List<List<ClaimServiceDateFormData>>>("BatchServiceDateFormData");
             PaymentCalculator paymentData = Context.Get<PaymentCalculator>("PaymentData");
-            ICollection<ServiceDateRequest> serviceDateRequests = InvoiceRequest.ServiceDateRequests;
+            int serviceDatesCount = Context.Get<int>("ServiceDateRequestsCount");
+            string treatmentType = Context.Get<string>("TreatmentType");
 
             var latestServiceDate = FindLatestServiceDate(serviceDateRequests);
             var payDate = CalculatePayDate(LatestServiceRequest, latestServiceDate);
@@ -31,7 +30,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                 StartDate = payDate,
                 PlaceOfService = "15",
                 CPT = "H2018",
-                DiagnosisPointer = GetDiagnosisPointer(InvoiceRequest.DiagnosisCodes.Count),
+                DiagnosisPointer = GetDiagnosisPointer(mockRequest.DiagnosisCodes.Count),
                 ChargesDollars = paymentDollars,
                 ChargesCents = paymentCents,
                 Units = "1"

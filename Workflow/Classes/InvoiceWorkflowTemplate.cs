@@ -7,8 +7,8 @@ namespace HAI_Selenium.Workflow.Classes
     {
         public async Task ExecuteAsync(IWebDriver driver)
         {
-            await InitializeDataAsync(driver); // Ensures LoadDataAsync completes before ProcessData starts
-            await ProcessDataAsync(driver); // Process data after loading is complete
+            await InitializeDataAsync(driver);
+            await ProcessDataAsync(driver);
         }
 
         protected abstract Task InitializeDataAsync(IWebDriver driver);

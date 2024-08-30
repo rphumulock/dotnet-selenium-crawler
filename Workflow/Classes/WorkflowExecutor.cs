@@ -31,7 +31,7 @@ namespace HAI_Selenium.Workflow.Classes
                     {
                         Log.Error("Max retry attempts reached. Analyzing exception...");
 
-                        ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex, invoiceRequestService);
+                        await ErrorHandlerUtils.AnalyzeAndHandleFinalExceptionAsync(ex, invoiceRequestService);
                         driver?.Quit();
                     }
                     else
