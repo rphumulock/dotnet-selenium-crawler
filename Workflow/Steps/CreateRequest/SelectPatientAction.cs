@@ -6,7 +6,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class SelectPatientAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Selecting patient...");
 
@@ -16,6 +16,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
             Log.Information("[SUCCESS] Patient selected successfully.");
 
+            return Task.CompletedTask;
         }
     }
 }

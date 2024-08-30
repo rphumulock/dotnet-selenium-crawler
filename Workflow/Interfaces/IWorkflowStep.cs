@@ -2,5 +2,5 @@
 
 public interface IWorkflowStep
 {
-    void Execute(IWebDriver driver);
+    Task ExecuteAsync(IWebDriver driver);
 }

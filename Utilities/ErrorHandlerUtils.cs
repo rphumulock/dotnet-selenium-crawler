@@ -1,20 +1,13 @@
 ﻿using OpenQA.Selenium;
 using System.Net.Sockets;
-using HAI_Selenium.Data;
 using HAI_Selenium.Database.Models;
 using Serilog;
-using System;
-using HAI_Selenium.Workflow.Steps.CreateRequest;
 using HAI_Selenium.Exceptions;
-using System.Linq;
-using HAI_Selenium.InternalClasses.CreateRequest;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-
+using HAI_Selenium.Services;
 
 namespace HAI_Selenium.Utilities
 {
-    // Correct single definition of HAI_Error class
     internal class HAI_Error
     {
         public ErrorType Type { get; }
@@ -32,7 +25,6 @@ namespace HAI_Selenium.Utilities
         }
     }
 
-    // Define ErrorType Enum
     internal enum ErrorType
     {
         Recoverable,
@@ -41,19 +33,19 @@ namespace HAI_Selenium.Utilities
 
     internal static class ErrorHandlerUtils
     {
-        public static void AnalyzeAndHandleFinalException(Exception ex)
+        public static void AnalyzeAndHandleFinalException(Exception ex, IInvoiceRequestService invoiceRequestService)
         {
             if (IsNetworkError(ex))
             {
-                HandleNetworkError(ex);
+                HandleNetworkError(ex, invoiceRequestService);
             }
             else if (IsSeleniumError(ex))
             {
-                HandleSeleniumError(ex);
+                HandleSeleniumError(ex, invoiceRequestService);
             }
             else
             {
-                HandleUnexpectedError(ex);
+                HandleUnexpectedError(ex, invoiceRequestService);
             }
         }
 
@@ -77,89 +69,80 @@ namespace HAI_Selenium.Utilities
                    ex is WebDriverException;
         }
 
-        private static void HandleNetworkError(Exception ex)
+        private static void HandleNetworkError(Exception ex, IInvoiceRequestService invoiceRequestService)
         {
             Log.Error(ex, "Network-related error: {Message}", ex.Message);
-            EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex));
+            EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, ex), invoiceRequestService);
         }
 
-        private static void HandleSeleniumError(Exception ex)
+        private static void HandleSeleniumError(Exception ex, IInvoiceRequestService invoiceRequestService)
         {
-            var errorType = ErrorType.Recoverable; // Default to recoverable
+            var errorType = ex is ElementClickInterceptedException || ex is UnhandledAlertException
+                ? ErrorType.NonRecoverable
+                : ErrorType.Recoverable;
+
             var errorMessage = ex switch
             {
                 NoSuchElementException => "NoSuchElementException",
                 InvalidSelectorException => "InvalidSelectorException",
                 StaleElementReferenceException => "StaleElementReferenceException",
                 ElementNotInteractableException => "ElementNotInteractableException",
-                //ElementClickInterceptedException => "ElementClickInterceptedException",
-                UnhandledAlertException => "UnhandledAlertException",
                 _ => "Unknown Selenium error"
             };
 
-            if (ex is ElementClickInterceptedException || ex is UnhandledAlertException)
-            {
-                errorType = ErrorType.NonRecoverable; // Mark specific errors as non-recoverable
-            }
-
             Log.Error(ex, $"{errorMessage}: {{Message}}", ex.Message);
-            EnterErrorIntoDatabase(new HAI_Error(errorType, ex));
+            EnterErrorIntoDatabase(new HAI_Error(errorType, ex), invoiceRequestService);
         }
 
-        private static void HandleUnexpectedError(Exception ex)
+        private static void HandleUnexpectedError(Exception ex, IInvoiceRequestService invoiceRequestService)
         {
             Log.Error(ex, "Unexpected error: {Message}", ex.Message);
 
             if (ex is HAIException haiException)
             {
-                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, haiException));
+                EnterErrorIntoDatabase(new HAI_Error(ErrorType.Recoverable, haiException), invoiceRequestService);
             }
             else
             {
-                throw ex; // Properly rethrow the original exception
+                Log.Error(ex, "Unexpected erro FIX MEEEE IN ERROR HANDLER: {Message}", ex.Message);
             }
         }
 
-        private static void EnterErrorIntoDatabase(HAI_Error error)
+        private static void EnterErrorIntoDatabase(HAI_Error error, IInvoiceRequestService invoiceRequestService)
         {
             try
             {
                 Log.Information("Executing workflow step for error handling");
 
-                using (var dbContext = new ApplicationDbContext())
+                if (error.Exception is HAIException haiException)
                 {
-                    if (error.Exception is HAIException haiException)
+                    var contextData = haiException.Context;
+                    InvoiceRequest createClaimsRequest = contextData.Get<InvoiceRequest>("InvoiceRequest");
+
+                    var currentBatch = contextData.Get<ICollection<ServiceDateRequest>>("CurrentBatchServiceDateRequests");
+                    var remainingBatches = contextData.Get<ICollection<ICollection<ServiceDateRequest>>>("RemainingBatchesServiceDateRequests");
+
+                    var allServiceDateRequests = currentBatch.ToList();
+                    foreach (var batch in remainingBatches)
                     {
-                        var contextData = haiException.Context;
-                        InvoiceRequest createClaimsRequest = contextData.Get<InvoiceRequest>("InvoiceRequest");
-
-                        // Retrieve current batch and remaining batches from context
-                        ICollection<ServiceDateRequest> currentBatch = contextData.Get<ICollection<ServiceDateRequest>>("CurrentBatchServiceDateRequests");
-                        ICollection<ICollection<ServiceDateRequest>> remainingBatches = contextData.Get<ICollection<ICollection<ServiceDateRequest>>>("RemainingBatchesServiceDateRequests");
-                        ICollection<ServiceDateRequest> allServiceDateRequests = new List<ServiceDateRequest>();
-                        allServiceDateRequests = currentBatch.ToList();
-                        foreach (var batch in remainingBatches)
-                        {
-                            allServiceDateRequests = allServiceDateRequests.Concat(batch).ToList();
-                        }
-
-                        // Create a new InvoiceRequest with the flattened list
-                        var newInvoiceRequest = new InvoiceRequest
-                        {
-                            Id = createClaimsRequest.Id,
-                            InvoiceId = createClaimsRequest.InvoiceId,
-                            FirstName = createClaimsRequest.FirstName,
-                            LastName = createClaimsRequest.LastName,
-                            PolicyNumber = createClaimsRequest.PolicyNumber,
-                            DiagnosisCodes = createClaimsRequest.DiagnosisCodes,
-                            DateOfBirth = createClaimsRequest.DateOfBirth,
-                            Gender = createClaimsRequest.Gender,
-                            ServiceDateRequests = allServiceDateRequests
-                        };
-
-                        dbContext.InvoiceRequests.Add(newInvoiceRequest);
-                        dbContext.SaveChanges();
+                        allServiceDateRequests = allServiceDateRequests.Concat(batch).ToList();
                     }
+
+                    var newInvoiceRequest = new InvoiceRequest
+                    {
+                        Id = createClaimsRequest.Id,
+                        InvoiceId = createClaimsRequest.InvoiceId,
+                        FirstName = createClaimsRequest.FirstName,
+                        LastName = createClaimsRequest.LastName,
+                        PolicyNumber = createClaimsRequest.PolicyNumber,
+                        DiagnosisCodes = createClaimsRequest.DiagnosisCodes,
+                        DateOfBirth = createClaimsRequest.DateOfBirth,
+                        Gender = createClaimsRequest.Gender,
+                        ServiceDateRequests = allServiceDateRequests
+                    };
+
+                    // Use the service to handle database operations
+                    invoiceRequestService.AddInvoiceRequest(newInvoiceRequest);
                 }
             }
             catch (Exception dbEx)
@@ -167,7 +150,6 @@ namespace HAI_Selenium.Utilities
                 Log.Error(dbEx, "Error writing to Database: {Message}", dbEx.Message);
                 throw;
             }
-
         }
     }
 }

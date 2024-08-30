@@ -13,14 +13,14 @@ namespace HAI_Selenium.Workflow.Classes
             return this;
         }
 
-        public void Execute(IWebDriver driver)
+        public async Task ExecuteAsync(IWebDriver driver)
         {
             foreach (var step in _steps)
             {
                 try
                 {
                     Log.Information("Executing workflow step: {StepName}", step.GetType().Name);
-                    step.Execute(driver);
+                    await step.ExecuteAsync(driver);
                 }
                 catch (Exception ex)
                 {

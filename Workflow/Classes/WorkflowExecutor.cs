@@ -2,6 +2,7 @@
 using Serilog;
 using HAI_Selenium.Workflow.Interfaces;
 using HAI_Selenium.Utilities;
+using HAI_Selenium.Services;
 
 namespace HAI_Selenium.Workflow.Classes
 {
@@ -9,7 +10,7 @@ namespace HAI_Selenium.Workflow.Classes
     {
         private const int MaxRetries = 3;
 
-        public static async Task ExecuteWithRetryAsync(IWorkflowStrategy workflow, IWebDriver driver)
+        public static async Task ExecuteWithRetryAsync(IWorkflowStrategy workflow, IWebDriver driver, IInvoiceRequestService invoiceRequestService)
         {
             for (int attempt = 1; attempt <= MaxRetries; attempt++)
             {
@@ -20,20 +21,18 @@ namespace HAI_Selenium.Workflow.Classes
                     await workflow.ExecuteAsync(driver);
 
                     Log.Information("Workflow completed successfully.");
-                    return; 
+                    return;
                 }
                 catch (Exception ex)
                 {
                     Log.Error("Attempt {Attempt} failed with exception.", attempt);
 
-
                     if (attempt == MaxRetries)
                     {
                         Log.Error("Max retry attempts reached. Analyzing exception...");
 
-                        ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex);
+                        ErrorHandlerUtils.AnalyzeAndHandleFinalException(ex, invoiceRequestService);
                         driver?.Quit();
-                        driver?.Close();
                     }
                     else
                     {
@@ -45,7 +44,7 @@ namespace HAI_Selenium.Workflow.Classes
 
         private static void HandleRetry(ref IWebDriver driver, int attempt)
         {
-            driver?.Quit(); 
+            driver?.Quit();
             ExponentialBackoff(attempt);
             RestartDriver(ref driver);
         }

@@ -7,7 +7,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class CaptureButtonsAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Capturing Buttons...");
 
@@ -17,6 +17,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             Context.Set("CancelButtonElement", cancelButton);
 
             Log.Information("[SUCCESS] Captured 'Add' and 'Cancel' buttons.");
+
+            return Task.CompletedTask;
         }
     }
 }

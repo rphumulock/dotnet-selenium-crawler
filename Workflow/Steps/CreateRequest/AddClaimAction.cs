@@ -6,7 +6,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class AddClaimAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Adding Claim...");
 
@@ -15,6 +15,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             addButton.Click();
 
             Log.Information("[SUCCESS] Clicked 'Add' button.");
+
+            return Task.CompletedTask;
         }
     }
 }

@@ -9,7 +9,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class SetFormHeaderData(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Creating FormData for Processing...");
 
@@ -25,6 +25,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             Context.Set("FormHeaderData", formHeaderData);
 
             Log.Information("[SUCCESS] FormData for Processing created and stored in context.");
+
+            return Task.CompletedTask;
         }
     }
 }

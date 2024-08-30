@@ -17,14 +17,14 @@ namespace HAI_Selenium.Workflow.Classes
             Context = context;
         }
 
-        public void Execute(IWebDriver driver)
+        public async Task ExecuteAsync(IWebDriver driver)
         {
             int attempts = 0;
             while (attempts < MaxRetries)
             {
                 try
                 {
-                    PerformStep(driver);
+                    await PerformStepAsync(driver);
                     return;
                 }
                 catch (Exception ex)
@@ -37,6 +37,8 @@ namespace HAI_Selenium.Workflow.Classes
                         Log.Error("Max retry attempts reached. Halting workflow.");
                         throw new HAIException(ex.Message, Context, ex);
                     }
+
+                    await Task.Delay(1000); // Optional: Wait before retrying
                 }
             }
         }
@@ -52,6 +54,6 @@ namespace HAI_Selenium.Workflow.Classes
             return wait.Until(condition);
         }
 
-        protected abstract void PerformStep(IWebDriver driver);
+        protected abstract Task PerformStepAsync(IWebDriver driver);
     }
 }

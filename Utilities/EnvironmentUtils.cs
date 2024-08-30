@@ -21,7 +21,7 @@ namespace HAI_Selenium.Utilities
         internal static void LoadEnvVariables()
         {
             Log.Information("[ACTION] Loading environment variables...");
-            DotEnv.Load();
+            DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
             Log.Information("[SUCCESS] Environment variables loaded.");
         }
 
@@ -37,12 +37,17 @@ namespace HAI_Selenium.Utilities
 
         internal static string GetEnvironmentVariableOrThrow(string key)
         {
+            Log.Information("Attempting to retrieve from environment: {Action}", key);
+
             var value = Environment.GetEnvironmentVariable(key);
             if (string.IsNullOrEmpty(value))
             {
                 Log.Error("Environment variable '{Key}' is not set.", key);
                 throw new InvalidOperationException($"Environment variable '{key}' is not set.");
             }
+
+            Log.Information("Action retrieved from environment: {Action}", value);
+
             return value;
         }
 

@@ -8,7 +8,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class SetPaymentData(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Creating FormData for Processing...");
 
@@ -18,7 +18,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
             IncedoServiceRequest LatestServiceRequest = Context.Get<IncedoServiceRequest>("LatestServiceRequest");
             List<List<ClaimServiceDateFormData>> BatchServiceDateFormData = Context.Get<List<List<ClaimServiceDateFormData>>>("BatchServiceDateFormData");
-            PaymentData paymentData = Context.Get<PaymentData>("PaymentData");
+            PaymentCalculator paymentData = Context.Get<PaymentCalculator>("PaymentData");
             ICollection<ServiceDateRequest> serviceDateRequests = InvoiceRequest.ServiceDateRequests;
 
             var latestServiceDate = FindLatestServiceDate(serviceDateRequests);
@@ -38,6 +38,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             });
 
             Log.Information("[SUCCESS] FormData for Processing created and stored in context.");
+
+            return Task.CompletedTask;
         }
 
         private static string GetDiagnosisPointer(int diagnosisCodeCount)

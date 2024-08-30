@@ -6,7 +6,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class CancelClaimAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Cancelling Claim...");
 
@@ -16,6 +16,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             cancelButton.Click();
 
             Log.Information("[SUCCESS] Clicked 'Cancel' button.");
+
+            return Task.CompletedTask;
         }
     }
 }

@@ -7,7 +7,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class ProcessClaimFormHeaderAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Processing form header...");
 
@@ -56,6 +56,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             Log.Information("Entered authorization number.");
 
             Log.Information("[SUCCESS] Processing form header.");
+
+            return Task.CompletedTask;
         }
     }
 }

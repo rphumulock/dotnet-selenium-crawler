@@ -4,12 +4,12 @@ using Serilog;
 using HAI_Selenium.Workflow.Classes;
 using HAI_Selenium.Database.Models;
 
-
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     public class ValidateCreateRequestAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Validating service dates month ...");
 
@@ -53,6 +53,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             Context.Set("TreatmentType", createClaimsRequest.ServiceDateRequests.ElementAt(0).TreatmentType);
 
             Log.Information("[SUCCESS] Invoice data loaded and service month validated: {ServiceMonth}.", serviceMonth);
+
+            return Task.CompletedTask;
         }
     }
 }

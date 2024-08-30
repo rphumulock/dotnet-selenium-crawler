@@ -6,7 +6,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class ProcessClaimFormFooterAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Processing form service dates...");
 
@@ -23,6 +23,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             Log.Information("Verified physician's signed date.");
 
             Log.Information("[SUCCESS] Processing form service dates...");
+
+            return Task.CompletedTask;
         }
     }
 }

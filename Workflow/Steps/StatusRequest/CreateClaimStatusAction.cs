@@ -1,48 +1,49 @@
-﻿using OpenQA.Selenium;
-using Serilog;
-using HAI_Selenium.InternalClasses.StatusRequest;
-using HAI_Selenium.Workflow.Classes;
+﻿//using OpenQA.Selenium;
+//using Serilog;
+//using HAI_Selenium.InternalClasses.StatusRequest;
+//using HAI_Selenium.Workflow.Classes;
 
 
-namespace HAI_Selenium.Workflow.Steps.StatusRequest
-{
-    internal class CreateClaimStatusAction : WorkflowStepBase
-    {
+//namespace HAI_Selenium.Workflow.Steps.StatusRequest
+//{
 
-        internal CreateClaimStatusAction(WorkflowContext context) : base(context) { }
+//    internal class CreateClaimStatusAction : WorkflowStepBase
+//    {
 
-        protected override void PerformStep(IWebDriver driver)
-        {
-            Log.Information("[ACTION] Creating Claim Status...");
+//        internal CreateClaimStatusAction(WorkflowContext context) : base(context) { }
 
-            try
-            {
-                ClaimStatus ClaimStatus = Context.Get<ClaimStatus>("ClaimContainer");
-                List<ClaimStatusLineItem> ClaimStatusLineItems = Context.Get<List<ClaimStatusLineItem>>("ClaimLineItems");
-                List<ClaimsStatusWithLineItems> ClaimStatuses = Context.Get<List<ClaimsStatusWithLineItems>>("ClaimStatuses");
-                ClaimsStatusWithLineItems claimsStatusWithLineItems = new(ClaimStatus, ClaimStatusLineItems);
+//        protected override Task PerformStepAsync(IWebDriver driver)
+//        {
+//            Log.Information("[ACTION] Creating Claim Status...");
 
-                ClaimStatuses.Add(claimsStatusWithLineItems);
+//            try
+//            {
+//                ClaimStatus ClaimStatus = Context.Get<ClaimStatus>("ClaimContainer");
+//                List<ClaimStatusLineItem> ClaimStatusLineItems = Context.Get<List<ClaimStatusLineItem>>("ClaimLineItems");
+//                List<ClaimsStatusWithLineItems> ClaimStatuses = Context.Get<List<ClaimsStatusWithLineItems>>("ClaimStatuses");
+//                ClaimsStatusWithLineItems claimsStatusWithLineItems = new(ClaimStatus, ClaimStatusLineItems);
 
-                Context.Set("ClaimStatuses", ClaimStatuses);
+//                ClaimStatuses.Add(claimsStatusWithLineItems);
 
-                Log.Information("[SUCCESS] Claim Status created successfully.");
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
+//                Context.Set("ClaimStatuses", ClaimStatuses);
 
-        public void WaitForTableData(IWebDriver driver, IWebElement table)
-        {
-            WaitUntil(driver, drv =>
-            {
-                var cells = table.FindElements(By.CssSelector("tbody td > :first-child"));
-                return cells.Count > 0;
-            });
+//                Log.Information("[SUCCESS] Claim Status created successfully.");
+//            }
+//            catch (Exception ex)
+//            {
+//                throw;
+//            }
+//        }
 
-            Log.Information("Modal opened and table data loaded.");
-        }
-    }
-}
+//        public void WaitForTableData(IWebDriver driver, IWebElement table)
+//        {
+//            WaitUntil(driver, drv =>
+//            {
+//                var cells = table.FindElements(By.CssSelector("tbody td > :first-child"));
+//                return cells.Count > 0;
+//            });
+
+//            Log.Information("Modal opened and table data loaded.");
+//        }
+//    }
+//}

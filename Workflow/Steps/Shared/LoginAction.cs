@@ -15,7 +15,7 @@ namespace HAI_Selenium.Workflow.Steps.Shared
             Context = context;
         }
 
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Logging into the site...");
 
@@ -50,6 +50,8 @@ namespace HAI_Selenium.Workflow.Steps.Shared
                 // Wait for login confirmation
                 WaitUntil(driver, ExpectedConditions.ElementIsVisible(By.CssSelector(".fixed-top.header-text")));
                 Log.Information("[SUCCESS] Login successful, header text found.");
+
+                return Task.CompletedTask;
             }
             catch (Exception ex)
             {

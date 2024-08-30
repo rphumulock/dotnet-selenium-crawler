@@ -12,7 +12,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 
         private const int BatchSize = 6;
 
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Creating FormData for Processing...");
 
@@ -33,6 +33,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             Context.Set("BatchServiceDateFormData", BatchList(serviceDateFormDataList));
 
             Log.Information("[SUCCESS] FormData for Processing created and stored in context.");
+
+            return Task.CompletedTask;
         }
 
         private static string GetDiagnosisPointer(int diagnosisCodeCount)

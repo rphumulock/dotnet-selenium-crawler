@@ -7,15 +7,15 @@ using HAI_Selenium.Database.Models;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
-    internal class LoadDataAction(WorkflowContext context) : WorkflowStepBase(context)
+    internal class MockRequest(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Loading JSON data...");
 
             // Load JSON data for InvoiceRequest and PaymentData
             InvoiceRequest createClaimsRequest = FileUtils.LoadJsonFile<InvoiceRequest>("Utilities/mockData/InvoiceCreateClaimsRequest.json");
-            PaymentData paymentData = FileUtils.LoadJsonFile<PaymentData>("Utilities/mockData/PaymentBreakdown.json");
+            PaymentCalculator paymentData = FileUtils.LoadJsonFile<PaymentCalculator>("Utilities/mockData/PaymentBreakdown.json");
             Log.Information("JSON data loaded successfully.");
 
             // Set data in the workflow context
@@ -23,6 +23,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             Context.Set("PaymentData", paymentData);
 
             Log.Information("[SUCCESS] Invoice and PaymentData set in context.");
+
+            return Task.CompletedTask;
         }
     }
 }

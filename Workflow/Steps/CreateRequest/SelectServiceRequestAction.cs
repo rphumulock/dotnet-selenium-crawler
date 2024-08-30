@@ -8,7 +8,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class SelectServiceRequestAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
             Log.Information("[ACTION] Selecting Service Request Authorization Number...");
 
@@ -98,6 +98,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             }
 
             Context.Set("LatestServiceRequest", latestRequest);
+
+            return Task.CompletedTask;
         }
     }
 }

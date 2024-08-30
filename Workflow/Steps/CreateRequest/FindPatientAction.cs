@@ -9,7 +9,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
     internal class FindPatientAction(WorkflowContext context) : WorkflowStepBase(context)
     {
-        protected override void PerformStep(IWebDriver driver)
+        protected override Task PerformStepAsync(IWebDriver driver)
         {
 
             InvoiceRequest createClaimsRequest = Context.Get<InvoiceRequest>("InvoiceRequest");
@@ -47,6 +47,8 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             ClickSearchButton(driver);
 
             Log.Information("[SUCCESS] Looking up patient {FirstName} {LastName}...", createClaimsRequest.FirstName, createClaimsRequest.LastName);
+
+            return Task.CompletedTask;
         }
 
         private void LogInputAction(IWebDriver driver, string elementId, string inputValue, string successMessage, string clickAfterInputSelector = null)
