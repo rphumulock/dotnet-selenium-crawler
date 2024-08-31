@@ -17,22 +17,16 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
             foreach (var indexedItem in indexedServiceDateRequests)
             {
                 int index = indexedItem.index + 1;
+                var serviceDate = indexedItem.serviceDate;
 
-                Log.Information("Entered CPT code for entry #{Index} of batch.", indexedItem.serviceDate.CPT);
+                Log.Information("Processing entry: {ServiceDate}", indexedItem.serviceDate);
 
                 IWebElement dateInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDateOfServStart" + index)));
                 ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", dateInput);
                 dateInput.Click();
                 dateInput.SendKeys(Keys.Control + "a");
                 dateInput.SendKeys(Keys.Delete);
-                if (num == 1)
-                {
-                    dateInput.SendKeys("sadsdf");
-                }
-                else
-                {
-                    dateInput.SendKeys(indexedItem.serviceDate.StartDate);
-                }
+                dateInput.SendKeys(serviceDate.StartDate);
                 Log.Information("Entered service date for entry #{Index} of batch.", index);
 
                 IWebElement dateInputDoneButton = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.CssSelector("button.ui-datepicker-close[data-handler='hide'][data-event='click']")));
@@ -43,7 +37,7 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                 placeOfServiceInput.Click();
                 placeOfServiceInput.SendKeys(Keys.Control + "a");
                 placeOfServiceInput.SendKeys(Keys.Delete);
-                placeOfServiceInput.SendKeys(indexedItem.serviceDate.PlaceOfService);
+                placeOfServiceInput.SendKeys(serviceDate.PlaceOfService);
                 Log.Information("Entered place of service for entry #{Index} of batch.", index);
 
                 IWebElement cptInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtCPT" + index)));
@@ -52,34 +46,34 @@ namespace HAI_Selenium.Workflow.Steps.CreateRequest
                 WaitForModalToClose(driver);
                 cptInput.SendKeys(Keys.Control + "a");
                 cptInput.SendKeys(Keys.Delete);
-                cptInput.SendKeys(indexedItem.serviceDate.CPT);
+                cptInput.SendKeys(serviceDate.CPT);
                 Log.Information("Entered CPT code for entry #{Index} of batch.", index);
 
                 IWebElement diagnosisInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDiagnosisPointer" + index)));
                 diagnosisInput.Click();
                 diagnosisInput.SendKeys(Keys.Control + "a");
                 diagnosisInput.SendKeys(Keys.Delete);
-                diagnosisInput.SendKeys(indexedItem.serviceDate.DiagnosisPointer);
+                diagnosisInput.SendKeys(serviceDate.DiagnosisPointer);
                 Log.Information("Entered diagnosis pointer for entry #{Index} of batch.", index);
 
                 IWebElement chargesInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtCharges" + index)));
                 chargesInput.Click();
                 chargesInput.SendKeys(Keys.Control + "a");
                 chargesInput.SendKeys(Keys.Delete);
-                chargesInput.SendKeys(indexedItem.serviceDate.ChargesDollars);
+                chargesInput.SendKeys(serviceDate.ChargesDollars);
                 Log.Information("Entered charges for entry #{Index} of batch.", index);
 
                 IWebElement chargesCentsInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtChargescents" + index)));
                 chargesCentsInput.Click();
                 chargesCentsInput.SendKeys(Keys.Control + "a");
                 chargesCentsInput.SendKeys(Keys.Delete);
-                chargesCentsInput.SendKeys(indexedItem.serviceDate.ChargesCents);
+                chargesCentsInput.SendKeys(serviceDate.ChargesCents);
 
                 IWebElement daysUnitsInput = WaitUntil(driver, SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("txtDaysUnits" + index)));
                 daysUnitsInput.Click();
                 daysUnitsInput.SendKeys(Keys.Control + "a");
                 daysUnitsInput.SendKeys(Keys.Delete);
-                daysUnitsInput.SendKeys(indexedItem.serviceDate.Units);
+                daysUnitsInput.SendKeys(serviceDate.Units);
                 Log.Information("Entered days/units for entry #{Index} of batch.", index);
             }
 

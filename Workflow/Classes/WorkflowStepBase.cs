@@ -20,12 +20,12 @@ namespace HAI_Selenium.Workflow.Classes
                 try
                 {
                     await PerformStepAsync(driver);
-                    return;
+                    return; // Exit if the step is successful
                 }
                 catch (Exception ex)
                 {
                     attempts++;
-                    Log.Error("Attempt {Attempt} failed with exception.", attempts);
+                    Log.Error("Attempt {Attempt} failed with exception: {ExceptionMessage}", attempts, ex.Message);
 
                     if (attempts >= MaxRetries)
                     {
@@ -33,9 +33,16 @@ namespace HAI_Selenium.Workflow.Classes
                         throw new HAIException(ex.Message, Context, ex);
                     }
 
-                    await Task.Delay(1000); // Optional: Wait before retrying
+                    int delay = ExponentialBackoff(attempts);
+                    Log.Information("Waiting for {Delay} milliseconds before retrying...", delay);
+                    await Task.Delay(delay);
                 }
             }
+        }
+
+        private static int ExponentialBackoff(int attempt)
+        {
+            return (int)Math.Pow(2, attempt) * 1000;
         }
 
         protected WebDriverWait GetWebDriverWait(IWebDriver driver, int waitTimeInSeconds = DefaultWaitTimeInSeconds)

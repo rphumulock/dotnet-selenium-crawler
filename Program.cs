@@ -81,7 +81,8 @@ namespace HAI_Selenium
                         var workflow = WorkflowFactory.GetWorkflow(action, invoiceRequestService, mockRequest);
 
                         // Execute the workflow with retry logic
-                        await WorkflowExecutor.ExecuteWithRetryAsync(workflow, driver, invoiceRequestService);
+                        await workflow.ExecuteAsync(driver);
+
                         Log.Information("Workflow executed successfully.");
                     }
                     catch (Exception ex)

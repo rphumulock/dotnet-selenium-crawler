@@ -7,18 +7,14 @@ using HAI_Selenium.Workflow.Steps.CreateRequest;
 using HAI_Selenium.Database.Models;
 using HAI_Selenium.Workflow.Steps;
 using HAI_Selenium.Services;
-
-// TODO: check catch no working when setting batches for  var batchServiceDateRequests = _context.Get<ICollection<ICollection<ServiceDateRequest>>>("BatchServiceDateRequests"); to list
-// fix errors for driver not closing between runs of serviode dates
+using HAI_Selenium.Utilities;
 
 namespace HAI_Selenium.Workflow.Workflows
 {
     internal class InvoiceRequestWorkflow : InvoiceWorkflowTemplate
     {
-
         private readonly WorkflowContext _context;
         private readonly IInvoiceRequestService _invoiceRequestService;
-        private readonly HashSet<int> _processedBatches = new HashSet<int>();
 
         public InvoiceRequestWorkflow(IInvoiceRequestService invoiceRequestService, InvoiceRequest mockRequest)
         {
@@ -29,7 +25,7 @@ namespace HAI_Selenium.Workflow.Workflows
 
         protected override async Task InitializeDataAsync(IWebDriver driver)
         {
-            var initialDataLoadChain = new WorkflowChain()
+            var initialDataLoadChain = new WorkflowChain(_invoiceRequestService)
                 .AddStep(new SetupInvoiceData(_context, _invoiceRequestService))
                 .AddStep(new GetPaymentData(_context))
                 .AddStep(new ValidateCreateRequestAction(_context))
@@ -51,13 +47,13 @@ namespace HAI_Selenium.Workflow.Workflows
             catch (Exception ex)
             {
                 Log.Error(ex, "An error occurred while processing data.");
-                throw;
+                await ErrorHandlerUtils.AnalyzeAndHandleFinalExceptionAsync(ex, _invoiceRequestService);
             }
         }
 
         private async Task ExecuteCompileFormDataChain(IWebDriver driver)
         {
-            var compileFormDataChain = new WorkflowChain()
+            var compileFormDataChain = new WorkflowChain(_invoiceRequestService)
                 .AddStep(new NavigateToSiteAction(_context))
                 .AddStep(new LoginAction(_context))
                 .AddStep(new NavigateToMembershipSearchAction(_context))
@@ -79,29 +75,10 @@ namespace HAI_Selenium.Workflow.Workflows
 
             for (int i = 0; i < batchServiceDateFormData.Count; i++)
             {
-                // Skip processing if this batch has already been processed successfully
-                if (_processedBatches.Contains(i))
-                {
-                    Log.Information("Skipping already processed batch {BatchIndex}.", i);
-                    continue;
-                }
-
-                try
-                {
-                    SetBatchContext(i, batchServiceDateFormData, batchServiceDateRequests);
-                    await ExecuteProcessFormDataChain(driver, i);
-
-                    // Mark this batch as processed
-                    _processedBatches.Add(i);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Error processing batch {BatchIndex}.", i);
-                    throw;
-                }
+                SetBatchContext(i, batchServiceDateFormData, batchServiceDateRequests);
+                await ExecuteProcessFormDataChain(driver, i);
             }
         }
-
 
         private void SetBatchContext(int index, List<List<ClaimServiceDateFormData>> batchServiceDateFormData, ICollection<ICollection<ServiceDateRequest>> batchServiceDateRequests)
         {
@@ -114,7 +91,7 @@ namespace HAI_Selenium.Workflow.Workflows
 
         private async Task ExecuteProcessFormDataChain(IWebDriver driver, int num)
         {
-            var processFormDataChain = new WorkflowChain()
+            var processFormDataChain = new WorkflowChain(_invoiceRequestService)
                 .AddStep(new CaptureButtonsAction(_context))
                 .AddStep(new AddClaimAction(_context))
                 .AddStep(new ProcessClaimFormHeaderAction(_context))
