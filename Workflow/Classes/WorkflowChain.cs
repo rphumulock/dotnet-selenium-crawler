@@ -1,5 +1,4 @@
-﻿using HAI_Selenium.Services;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
 using Serilog;
 
 namespace HAI_Selenium.Workflow.Classes
@@ -7,12 +6,6 @@ namespace HAI_Selenium.Workflow.Classes
     public class WorkflowChain
     {
         private readonly List<IWorkflowStep> _steps = new List<IWorkflowStep>();
-        private readonly IInvoiceRequestService _invoiceRequestService;
-
-        public WorkflowChain(IInvoiceRequestService invoiceRequestService)
-        {
-            _invoiceRequestService = invoiceRequestService;
-        }
 
         public WorkflowChain AddStep(IWorkflowStep step)
         {

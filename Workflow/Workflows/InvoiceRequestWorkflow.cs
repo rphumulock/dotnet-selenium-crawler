@@ -23,9 +23,10 @@ namespace HAI_Selenium.Workflow.Workflows
             _context.Set("MockRequest", mockRequest);
         }
 
+ 
         protected override async Task InitializeDataAsync(IWebDriver driver)
         {
-            var initialDataLoadChain = new WorkflowChain(_invoiceRequestService)
+            var initialDataLoadChain = new WorkflowChain()
                 .AddStep(new SetupInvoiceData(_context, _invoiceRequestService))
                 .AddStep(new GetPaymentData(_context))
                 .AddStep(new ValidateCreateRequestAction(_context))
@@ -53,7 +54,7 @@ namespace HAI_Selenium.Workflow.Workflows
 
         private async Task ExecuteCompileFormDataChain(IWebDriver driver)
         {
-            var compileFormDataChain = new WorkflowChain(_invoiceRequestService)
+            var compileFormDataChain = new WorkflowChain()
                 .AddStep(new NavigateToSiteAction(_context))
                 .AddStep(new LoginAction(_context))
                 .AddStep(new NavigateToMembershipSearchAction(_context))
@@ -76,26 +77,43 @@ namespace HAI_Selenium.Workflow.Workflows
             for (int i = 0; i < batchServiceDateFormData.Count; i++)
             {
                 SetBatchContext(i, batchServiceDateFormData, batchServiceDateRequests);
-                await ExecuteProcessFormDataChain(driver, i);
+                await ExecuteProcessFormDataChain(driver);
             }
+        }
+
+        private void IntroduceError(List<ClaimServiceDateFormData> serviceDateFormData)
+        {
+            serviceDateFormData[0] = new ClaimServiceDateFormData
+            {
+                StartDate = "asfdsdf",
+                PlaceOfService = "15",
+                CPT = "H2016",
+                DiagnosisPointer = "GetDiagnosisPointer(mockRequest.DiagnosisCodes.Count)",
+                ChargesDollars = "1.",
+                ChargesCents = "00",
+                Units = "1"
+            };
         }
 
         private void SetBatchContext(int index, List<List<ClaimServiceDateFormData>> batchServiceDateFormData, ICollection<ICollection<ServiceDateRequest>> batchServiceDateRequests)
         {
-            _context.Set("CurrentBatchServiceDateFormData", batchServiceDateFormData[index]);
+            var currentBatch = batchServiceDateFormData[index];
+
+            _context.Set("CurrentBatchServiceDateFormData", currentBatch);
             _context.Set("RemainingBatchesServiceDateFormData", batchServiceDateFormData.Skip(index + 1).ToList());
 
             _context.Set("CurrentBatchServiceDateRequests", batchServiceDateRequests.ElementAt(index));
             _context.Set("RemainingBatchesServiceDateRequests", batchServiceDateRequests.Skip(index + 1).ToList());
         }
 
-        private async Task ExecuteProcessFormDataChain(IWebDriver driver, int num)
+
+        private async Task ExecuteProcessFormDataChain(IWebDriver driver)
         {
-            var processFormDataChain = new WorkflowChain(_invoiceRequestService)
+            var processFormDataChain = new WorkflowChain()
                 .AddStep(new CaptureButtonsAction(_context))
                 .AddStep(new AddClaimAction(_context))
                 .AddStep(new ProcessClaimFormHeaderAction(_context))
-                .AddStep(new ProcessFormServiceDatesAction(_context, num))
+                .AddStep(new ProcessFormServiceDatesAction(_context))
                 .AddStep(new ProcessClaimFormFooterAction(_context))
                 .AddStep(new CancelClaimAction(_context));
 
@@ -109,5 +127,6 @@ namespace HAI_Selenium.Workflow.Workflows
                 throw;
             }
         }
+
     }
 }

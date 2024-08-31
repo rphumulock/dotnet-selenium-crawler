@@ -3,11 +3,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using OpenQA.Selenium;
-using HAI_Selenium.Workflow.Classes;
 using HAI_Selenium.Services;
 using HAI_Selenium.Data;
 using HAI_Selenium.Utilities;
-using HAI_Selenium.InternalClasses.CreateRequest;
 
 namespace HAI_Selenium
 {
@@ -26,14 +24,12 @@ namespace HAI_Selenium
             {
                 Log.Information("Application starting.");
 
-                InvoiceRequest mockRequest = FileUtils.LoadJsonFile<InvoiceRequest>("Utilities/mockData/InvoiceCreateClaimsRequest.json");
-
                 // Setup and run the workflow
-                await SetupAndRunWorkflowAsync(args, mockRequest);
+                await SetupAndRunWorkflowAsync(args);
 
-                //// Optionally run the host if necessary (e.g., for a web application or background services)
-                //var host = CreateHostBuilder(args).Build();
-                //await host.RunAsync();
+                // Optionally run the host if necessary (e.g., for a web application or background services)
+                var host = CreateHostBuilder(args).Build();
+                await host.RunAsync();
             }
             catch (Exception ex)
             {
@@ -46,41 +42,32 @@ namespace HAI_Selenium
             }
         }
 
-        static async Task SetupAndRunWorkflowAsync(string[] args, InvoiceRequest mockRequest)
+        static async Task SetupAndRunWorkflowAsync(string[] args)
         {
-            // Setup environment variables and logging
             EnvironmentUtils.LoadEnvVariables();
             EnvironmentUtils.LogCurrentUserInfo();
             var connectionString = EnvironmentUtils.DbConnectionStringBuilder();
             string lockKey = "HAI_Selenium_DistributedLock";
             IWebDriver driver = null;
 
-            // Create HostBuilder and configure services
             var host = CreateHostBuilder(args).Build();
 
             using (var serviceScope = host.Services.CreateScope())
             {
                 var services = serviceScope.ServiceProvider;
 
-                // Retrieve required services
-                var invoiceRequestService = services.GetRequiredService<IInvoiceRequestService>();
+                string action = EnvironmentUtils.GetEnvironmentVariableOrThrow("ACTION");
 
-                // Initialize the DatabaseLockManager
+                // The factory automatically uses the correct service based on the action
+                var workflow = WorkflowFactory.GetWorkflow(action, services);
+
                 using (var lockManager = new DatabaseLockManager(connectionString, lockKey))
                 {
                     try
                     {
-                        // Acquire the lock
                         lockManager.AcquireLock();
-
-                        // Setup driver
                         driver = WebDriverUtils.SetupDriver();
 
-                        // Get the action from the environment and create workflow
-                        string action = EnvironmentUtils.GetEnvironmentVariableOrThrow("ACTION");
-                        var workflow = WorkflowFactory.GetWorkflow(action, invoiceRequestService, mockRequest);
-
-                        // Execute the workflow with retry logic
                         await workflow.ExecuteAsync(driver);
 
                         Log.Information("Workflow executed successfully.");
@@ -91,9 +78,8 @@ namespace HAI_Selenium
                     }
                     finally
                     {
-                        // Cleanup WebDriver
                         driver?.Quit();
-                        driver?.Dispose(); // Ensure complete cleanup
+                        driver?.Dispose();
                         Log.Information("WebDriver closed and quit.");
                     }
                 }
@@ -101,22 +87,77 @@ namespace HAI_Selenium
         }
 
         static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .UseSerilog()
-                .ConfigureServices((context, services) =>
-                {
-                    var connectionString = EnvironmentUtils.DbConnectionStringBuilder();
-                    // Register DbContext with connection string
-                    services.AddDbContext<ApplicationDbContext>(options =>
-                    {
-                        options.EnableSensitiveDataLogging();
-                        options.UseNpgsql(connectionString);
-                    });
+             Host.CreateDefaultBuilder(args)
+                 .UseSerilog()
+                 .ConfigureServices((context, services) =>
+                 {
+                     var connectionString = EnvironmentUtils.DbConnectionStringBuilder();
+                     services.AddDbContext<ApplicationDbContext>(options =>
+                     {
+                         options.EnableSensitiveDataLogging();
+                         options.UseNpgsql(connectionString);
+                     });
 
-                    //services.AddDbContext<ApplicationDbContext>();
-
-                    // Register application services
-                    services.AddScoped<IInvoiceRequestService, InvoiceRequestService>();
-                });
+                     // Register your specific services
+                     services.AddScoped<IInvoiceRequestService, InvoiceRequestService>();
+                     services.AddSingleton<INRulesService, NRulesService>();
+                 });
     }
 }
+
+
+
+
+//static async Task SetupAndRunWorkflowAsync(string[] args)
+//{
+//    // Setup environment variables and logging
+//    EnvironmentUtils.LoadEnvVariables();
+//    EnvironmentUtils.LogCurrentUserInfo();
+//    var connectionString = EnvironmentUtils.DbConnectionStringBuilder();
+//    string lockKey = "HAI_Selenium_DistributedLock";
+//    IWebDriver driver = null;
+
+//    // Create HostBuilder and configure services
+//    var host = CreateHostBuilder(args).Build();
+
+//    using (var serviceScope = host.Services.CreateScope())
+//    {
+//        var services = serviceScope.ServiceProvider;
+
+//        // Retrieve required services
+//        var invoiceRequestService = services.GetRequiredService<IInvoiceRequestService>();
+
+//        // Initialize the DatabaseLockManager
+//        using (var lockManager = new DatabaseLockManager(connectionString, lockKey))
+//        {
+//            try
+//            {
+//                // Acquire the lock
+//                lockManager.AcquireLock();
+
+//                // Setup driver
+//                driver = WebDriverUtils.SetupDriver();
+
+//                // Get the action from the environment and create workflow
+//                string action = EnvironmentUtils.GetEnvironmentVariableOrThrow("ACTION");
+//                var workflow = WorkflowFactory.GetWorkflow(action, invoiceRequestService);
+
+//                // Execute the workflow with retry logic
+//                await workflow.ExecuteAsync(driver);
+
+//                Log.Information("Workflow executed successfully.");
+//            }
+//            catch (Exception ex)
+//            {
+//                Log.Error(ex, "An error occurred while acquiring the lock or executing the workflow.");
+//            }
+//            finally
+//            {
+//                // Cleanup WebDriver
+//                driver?.Quit();
+//                driver?.Dispose(); // Ensure complete cleanup
+//                Log.Information("WebDriver closed and quit.");
+//            }
+//        }
+//    }
+//}

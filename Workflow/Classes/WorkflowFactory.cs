@@ -1,20 +1,26 @@
-﻿using HAI_Selenium.Workflow.Interfaces;
-using HAI_Selenium.Workflow.Workflows;
+﻿using HAI_Selenium.InternalClasses.CreateRequest;
+using HAI_Selenium.InternalClasses.StatusRequest;
 using HAI_Selenium.Services;
-using HAI_Selenium.InternalClasses.CreateRequest;
+using HAI_Selenium.Utilities;
+using HAI_Selenium.Workflow.Interfaces;
+using HAI_Selenium.Workflow.Workflows;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace HAI_Selenium.Workflow.Classes
+internal static class WorkflowFactory
 {
-    internal static class WorkflowFactory
+    public static IWorkflowStrategy GetWorkflow(string action, IServiceProvider serviceProvider)
     {
-        public static IWorkflowStrategy GetWorkflow(string action, IInvoiceRequestService invoiceRequestService, InvoiceRequest mockRequest)
+        return action switch
         {
-            return action switch
-            {
-                "Create" => new InvoiceRequestWorkflow(invoiceRequestService, mockRequest),
-                //"Status" => new InvoiceStatusWorkflow(invoiceRequestService),
-                _ => throw new InvalidOperationException("Unknown action"),
-            };
-        }
+            "Create" => new InvoiceRequestWorkflow(
+                serviceProvider.GetRequiredService<IInvoiceRequestService>(),  // Resolves IInvoiceRequestService for "Create"
+                FileUtils.LoadJsonFile<InvoiceRequest>("Utilities/mockData/InvoiceCreateClaimsRequest.json")
+            ),
+            "Status" => new InvoiceStatusWorkflow(
+                serviceProvider.GetRequiredService<INRulesService>(),  // Resolves INRulesService for "Status"
+                FileUtils.LoadJsonFile<InvoiceStatusRequest>("Utilities/mockData/InvoiceStatusRequest.json")
+            ),
+            _ => throw new InvalidOperationException("Unknown action"),
+        };
     }
 }

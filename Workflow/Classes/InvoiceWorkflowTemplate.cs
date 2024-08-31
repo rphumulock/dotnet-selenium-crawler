@@ -7,11 +7,18 @@ namespace HAI_Selenium.Workflow.Classes
     {
         public async Task ExecuteAsync(IWebDriver driver)
         {
+            InitializeData(driver);
             await InitializeDataAsync(driver);
             await ProcessDataAsync(driver);
         }
 
-        protected abstract Task InitializeDataAsync(IWebDriver driver);
+        protected virtual void InitializeData(IWebDriver driver) { }
+
+        protected virtual Task InitializeDataAsync(IWebDriver driver)
+        {
+            return Task.CompletedTask;
+        }
+
         protected abstract Task ProcessDataAsync(IWebDriver driver);
     }
 }

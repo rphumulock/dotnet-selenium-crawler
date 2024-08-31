@@ -5,7 +5,7 @@ using HAI_Selenium.Workflow.Classes;
 
 namespace HAI_Selenium.Workflow.Steps.CreateRequest
 {
-    internal class ProcessFormServiceDatesAction(WorkflowContext context, int num) : WorkflowStepBase(context)
+    internal class ProcessFormServiceDatesAction(WorkflowContext context) : WorkflowStepBase(context)
     {
         protected override Task PerformStepAsync(IWebDriver driver)
         {

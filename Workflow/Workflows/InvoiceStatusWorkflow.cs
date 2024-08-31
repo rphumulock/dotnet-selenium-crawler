@@ -1,61 +1,92 @@
-﻿//using OpenQA.Selenium;
-//using HAI_Selenium.InternalClasses.StatusRequest;
-//using HAI_Selenium.Workflow.AbstractClasses;
-//using HAI_Selenium.Workflow.Steps.Shared;
-//using HAI_Selenium.Workflow.Steps.StatusRequest;
+﻿using OpenQA.Selenium;
+using Serilog;
+using HAI_Selenium.InternalClasses.StatusRequest;
+using HAI_Selenium.Workflow.Classes;
+using HAI_Selenium.Workflow.Steps.Shared;
+using HAI_Selenium.Services;
+using HAI_Selenium.Workflow.Steps.StatusRequest;
 
-//namespace HAI_Selenium.Workflow.Workflows
-//{
-//    public class InvoiceStatusWorkflow : InvoiceWorkflowTemplate
-//    {
+namespace HAI_Selenium.Workflow.Workflows
+{
+    internal class InvoiceStatusWorkflow : InvoiceWorkflowTemplate
+    {
+        private readonly WorkflowContext _context;
+        private readonly INRulesService _nRulesService;
 
-//        private readonly WorkflowContext Context;
+        public InvoiceStatusWorkflow(INRulesService nRulesService, InvoiceStatusRequest mockRequest)
+        {
+            _context = new WorkflowContext();
+            _nRulesService = nRulesService;
+            _context.Set("MockRequest", mockRequest);
+        }
 
-//        public InvoiceStatusWorkflow()
-//        {
-//            Context = new WorkflowContext();
-//            Context.Set("ClaimStatuses", new List<ClaimsStatusWithLineItems>());
-//        }
+        protected override void InitializeData(IWebDriver driver)
+        {
+            _context.Set("ClaimStatuses", new List<ClaimsStatusWithLineItems>());
+        }
 
-//        protected override void ProcessData(IWebDriver driver)
-//        {
-//            try
-//            {
-//                WorkflowChain loadDataChain = new WorkflowChain()
-//                    .AddStep(new LoadDataAction(Context));
-//                loadDataChain.Execute(driver);
+        protected override async Task ProcessDataAsync(IWebDriver driver)
+        {
+            try
+            {
+                await ExecuteWorkflowChain(driver);
 
-//                WorkflowChain workflowChain = new WorkflowChain()
-//                    .AddStep(new NavigateToSiteAction())
-//                    .AddStep(new LoginAction())
-//                    .AddStep(new NavigateToClaimsStatusAction());
+                List<ClaimsStatusWithLineItems> claimStatuses = _context.Get<List<ClaimsStatusWithLineItems>>("ClaimStatuses");
+                foreach (var item in claimStatuses)
+                {
+                    Console.WriteLine($"Claim Status: {item}");
+                }
 
-//                var indexedBatchedServiceDates = Context.Get<InvoiceStatusRequest>("InvoiceStatusRequest").ClaimStatusRequests.Select((ClaimStatusRequest, index) => new { ClaimStatusRequest, index }).ToList();
-//                foreach (var indexItem in indexedBatchedServiceDates)
-//                {
-//                    workflowChain
-//                        .AddStep(new FindClaimAction(indexItem.ClaimStatusRequest))
-//                        .AddStep(new ProcessClaimHeaderAction(Context))
-//                        .AddStep(new OpenClaimsLineItemsAction(Context))
-//                        .AddStep(new ProcessClaimLineItemsAction(Context))
-//                        .AddStep(new CreateClaimStatusAction(Context));
-//                }
-//                workflowChain.Execute(driver);
+                EvaluateRules(claimStatuses);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error during workflow process.");
+                throw;
+            }
+            finally
+            {
+                driver.Quit();
+            }
+        }
 
-//                List<ClaimsStatusWithLineItems> cs = Context.Get<List<ClaimsStatusWithLineItems>>("ClaimStatuses");
+        private async Task ExecuteWorkflowChain(IWebDriver driver)
+        {
+            var workflowChain = new WorkflowChain()
+                .AddStep(new NavigateToSiteAction(_context))
+                .AddStep(new LoginAction(_context))
+                .AddStep(new NavigateToClaimsStatusAction(_context));
 
-//                foreach (var item in cs)
-//                {
-//                    Console.WriteLine($"Claim Status: {item}");
-//                }
+            InvoiceStatusRequest mockRequest = _context.Get<InvoiceStatusRequest>("MockRequest");
+            var indexedBatchedServiceDates = mockRequest.ClaimStatusRequests
+                .Select((claimStatusRequest, index) => new { claimStatusRequest, index })
+                .ToList();
 
-//                driver.Quit();
-//            }
-//            catch (Exception ex)
-//            {
-//                Console.WriteLine($"Error during workflow process: {ex.Message}");
-//                throw; // Re-throw to allow outer logic to handle retries
-//            }
-//        }
-//    }
-//}
+            foreach (var indexItem in indexedBatchedServiceDates)
+            {
+                workflowChain
+                    .AddStep(new FindClaimAction(_context, indexItem.claimStatusRequest))
+                    .AddStep(new ProcessClaimHeaderAction(_context))
+                    .AddStep(new OpenClaimsLineItemsAction(_context))
+                    .AddStep(new ProcessClaimLineItemsAction(_context))
+                    .AddStep(new CreateClaimStatusAction(_context));
+            }
+
+            await workflowChain.ExecuteAsync(driver);
+        }
+
+        private void EvaluateRules(List<ClaimsStatusWithLineItems> claimStatuses)
+        {
+            var session = _nRulesService.CreateSession();
+
+            // Insert facts (your claimStatuses or any other relevant objects)
+            foreach (var claimStatus in claimStatuses)
+            {
+                session.Insert(claimStatus);
+            }
+
+            // Fire rules
+            session.Fire();
+        }
+    }
+}
