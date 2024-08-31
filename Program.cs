@@ -6,6 +6,7 @@ using OpenQA.Selenium;
 using HAI_Selenium.Services;
 using HAI_Selenium.Data;
 using HAI_Selenium.Utilities;
+using HAI_Selenium.Services.NRules;
 
 namespace HAI_Selenium
 {

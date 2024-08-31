@@ -3,8 +3,8 @@ using Serilog;
 using HAI_Selenium.InternalClasses.StatusRequest;
 using HAI_Selenium.Workflow.Classes;
 using HAI_Selenium.Workflow.Steps.Shared;
-using HAI_Selenium.Services;
 using HAI_Selenium.Workflow.Steps.StatusRequest;
+using HAI_Selenium.Services.NRules;
 
 namespace HAI_Selenium.Workflow.Workflows
 {
@@ -77,16 +77,29 @@ namespace HAI_Selenium.Workflow.Workflows
 
         private void EvaluateRules(List<ClaimsStatusWithLineItems> claimStatuses)
         {
-            var session = _nRulesService.CreateSession();
+            Log.Information("Starting rule evaluation for claim statuses.");
 
-            // Insert facts (your claimStatuses or any other relevant objects)
-            foreach (var claimStatus in claimStatuses)
+            try
             {
-                session.Insert(claimStatus);
-            }
+                var session = _nRulesService.CreateSession();
 
-            // Fire rules
-            session.Fire();
+                // Insert facts (your claimStatuses or any other relevant objects)
+                foreach (var claimStatus in claimStatuses)
+                {
+                    session.Insert(claimStatus);
+                    Log.Information($"Inserted claim status into NRules session: {claimStatus}");
+                }
+
+                // Fire rules
+                session.Fire();
+                Log.Information("Rules fired and evaluated successfully.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "An error occurred during rule evaluation.");
+                throw;
+            }
         }
+
     }
 }

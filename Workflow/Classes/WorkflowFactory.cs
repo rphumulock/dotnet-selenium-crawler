@@ -1,6 +1,7 @@
 ﻿using HAI_Selenium.InternalClasses.CreateRequest;
 using HAI_Selenium.InternalClasses.StatusRequest;
 using HAI_Selenium.Services;
+using HAI_Selenium.Services.NRules;
 using HAI_Selenium.Utilities;
 using HAI_Selenium.Workflow.Interfaces;
 using HAI_Selenium.Workflow.Workflows;
