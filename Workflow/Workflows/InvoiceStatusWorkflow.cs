@@ -4,19 +4,16 @@ using HAI_Selenium.InternalClasses.StatusRequest;
 using HAI_Selenium.Workflow.Classes;
 using HAI_Selenium.Workflow.Steps.Shared;
 using HAI_Selenium.Workflow.Steps.StatusRequest;
-using HAI_Selenium.Services.NRules;
 
 namespace HAI_Selenium.Workflow.Workflows
 {
     internal class InvoiceStatusWorkflow : InvoiceWorkflowTemplate
     {
         private readonly WorkflowContext _context;
-        private readonly INRulesService _nRulesService;
 
-        public InvoiceStatusWorkflow(INRulesService nRulesService, InvoiceStatusRequest mockRequest)
+        public InvoiceStatusWorkflow(InvoiceStatusRequest mockRequest)
         {
             _context = new WorkflowContext();
-            _nRulesService = nRulesService;
             _context.Set("MockRequest", mockRequest);
         }
 
@@ -37,7 +34,6 @@ namespace HAI_Selenium.Workflow.Workflows
                     Console.WriteLine($"Claim Status: {item}");
                 }
 
-                EvaluateRules(claimStatuses);
             }
             catch (Exception ex)
             {
@@ -73,32 +69,6 @@ namespace HAI_Selenium.Workflow.Workflows
             }
 
             await workflowChain.ExecuteAsync(driver);
-        }
-
-        private void EvaluateRules(List<ClaimsStatusWithLineItems> claimStatuses)
-        {
-            Log.Information("Starting rule evaluation for claim statuses.");
-
-            try
-            {
-                var session = _nRulesService.CreateSession();
-
-                // Insert facts (your claimStatuses or any other relevant objects)
-                foreach (var claimStatus in claimStatuses)
-                {
-                    session.Insert(claimStatus);
-                    Log.Information($"Inserted claim status into NRules session: {claimStatus}");
-                }
-
-                // Fire rules
-                session.Fire();
-                Log.Information("Rules fired and evaluated successfully.");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "An error occurred during rule evaluation.");
-                throw;
-            }
         }
 
     }

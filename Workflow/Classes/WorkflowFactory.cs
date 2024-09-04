@@ -1,7 +1,6 @@
 ﻿using HAI_Selenium.InternalClasses.CreateRequest;
 using HAI_Selenium.InternalClasses.StatusRequest;
 using HAI_Selenium.Services;
-using HAI_Selenium.Services.NRules;
 using HAI_Selenium.Utilities;
 using HAI_Selenium.Workflow.Interfaces;
 using HAI_Selenium.Workflow.Workflows;
@@ -18,7 +17,6 @@ internal static class WorkflowFactory
                 FileUtils.LoadJsonFile<InvoiceRequest>("Utilities/mockData/InvoiceCreateClaimsRequest.json")
             ),
             "Status" => new InvoiceStatusWorkflow(
-                serviceProvider.GetRequiredService<INRulesService>(),  // Resolves INRulesService for "Status"
                 FileUtils.LoadJsonFile<InvoiceStatusRequest>("Utilities/mockData/InvoiceStatusRequest.json")
             ),
             _ => throw new InvalidOperationException("Unknown action"),

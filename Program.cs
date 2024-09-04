@@ -6,7 +6,6 @@ using OpenQA.Selenium;
 using HAI_Selenium.Services;
 using HAI_Selenium.Data;
 using HAI_Selenium.Utilities;
-using HAI_Selenium.Services.NRules;
 
 namespace HAI_Selenium
 {
@@ -101,64 +100,6 @@ namespace HAI_Selenium
 
                      // Register your specific services
                      services.AddScoped<IInvoiceRequestService, InvoiceRequestService>();
-                     services.AddSingleton<INRulesService, NRulesService>();
                  });
     }
 }
-
-
-
-
-//static async Task SetupAndRunWorkflowAsync(string[] args)
-//{
-//    // Setup environment variables and logging
-//    EnvironmentUtils.LoadEnvVariables();
-//    EnvironmentUtils.LogCurrentUserInfo();
-//    var connectionString = EnvironmentUtils.DbConnectionStringBuilder();
-//    string lockKey = "HAI_Selenium_DistributedLock";
-//    IWebDriver driver = null;
-
-//    // Create HostBuilder and configure services
-//    var host = CreateHostBuilder(args).Build();
-
-//    using (var serviceScope = host.Services.CreateScope())
-//    {
-//        var services = serviceScope.ServiceProvider;
-
-//        // Retrieve required services
-//        var invoiceRequestService = services.GetRequiredService<IInvoiceRequestService>();
-
-//        // Initialize the DatabaseLockManager
-//        using (var lockManager = new DatabaseLockManager(connectionString, lockKey))
-//        {
-//            try
-//            {
-//                // Acquire the lock
-//                lockManager.AcquireLock();
-
-//                // Setup driver
-//                driver = WebDriverUtils.SetupDriver();
-
-//                // Get the action from the environment and create workflow
-//                string action = EnvironmentUtils.GetEnvironmentVariableOrThrow("ACTION");
-//                var workflow = WorkflowFactory.GetWorkflow(action, invoiceRequestService);
-
-//                // Execute the workflow with retry logic
-//                await workflow.ExecuteAsync(driver);
-
-//                Log.Information("Workflow executed successfully.");
-//            }
-//            catch (Exception ex)
-//            {
-//                Log.Error(ex, "An error occurred while acquiring the lock or executing the workflow.");
-//            }
-//            finally
-//            {
-//                // Cleanup WebDriver
-//                driver?.Quit();
-//                driver?.Dispose(); // Ensure complete cleanup
-//                Log.Information("WebDriver closed and quit.");
-//            }
-//        }
-//    }
-//}

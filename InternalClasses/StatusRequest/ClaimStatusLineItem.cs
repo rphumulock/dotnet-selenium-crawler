@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System.Security.Claims;
 
 namespace HAI_Selenium.InternalClasses.StatusRequest
 {
@@ -35,8 +34,3 @@ namespace HAI_Selenium.InternalClasses.StatusRequest
         }
     }
 }
-   .Match<Claim>(() => claim,
-                c => c.ClaimStatus == "Not Adjudicated",
-                c => c.ServiceDateStatus == "Not Adjudicated",
-                c => c.AmountRequested == 1200.00m,  // Match decimal value, not formatted string
-                c => c.AmountPaid == 0.00m);  // Zero represents "$ -" in numeric form

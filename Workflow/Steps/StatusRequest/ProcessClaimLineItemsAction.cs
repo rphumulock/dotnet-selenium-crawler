@@ -1,8 +1,6 @@
 ﻿using OpenQA.Selenium;
 using HAI_Selenium.InternalClasses.StatusRequest;
 using Serilog;
-using System.Collections.Generic;
-using System.Linq;
 using HAI_Selenium.Workflow.Classes;
 
 namespace HAI_Selenium.Workflow.Steps.StatusRequest
